@@ -12,57 +12,25 @@ namespace Gpx
     {
         // GARMIN_EXTENSIONS, GARMIN_TRACKPOINT_EXTENSIONS_V1, GARMIN_TRACKPOINT_EXTENSIONS_V2
 
-        public double? Temperature
-        {
-            get { return Properties_.GetValueProperty<double>("Temperature"); }
-            set { Properties_.SetValueProperty<double>("Temperature", value); }
-        }
+        public double? Temperature { get; set; }
 
-        public double? Depth
-        {
-            get { return Properties_.GetValueProperty<double>("Depth"); }
-            set { Properties_.SetValueProperty<double>("Depth", value); }
-        }
+        public double? Depth { get; set; }
 
         // GARMIN_TRACKPOINT_EXTENSIONS_V1, GARMIN_TRACKPOINT_EXTENSIONS_V2
 
-        public double? WaterTemperature
-        {
-            get { return Properties_.GetValueProperty<double>("WaterTemperature"); }
-            set { Properties_.SetValueProperty<double>("WaterTemperature", value); }
-        }
+        public double? WaterTemperature { get; set; }
 
-        public int? HeartRate
-        {
-            get { return Properties_.GetValueProperty<int>("HeartRate"); }
-            set { Properties_.SetValueProperty<int>("HeartRate", value); }
-        }
+        public int? HeartRate { get; set; }
 
-        public int? Cadence
-        {
-            get { return Properties_.GetValueProperty<int>("Cadence"); }
-            set { Properties_.SetValueProperty<int>("Cadence", value); }
-        }
+        public int? Cadence { get; set; }
 
         // GARMIN_TRACKPOINT_EXTENSIONS_V2
 
-        public double? Speed
-        {
-            get { return Properties_.GetValueProperty<double>("Speed"); }
-            set { Properties_.SetValueProperty<double>("Speed", value); }
-        }
+        public double? Speed { get; set; }
 
-        public double? Course
-        {
-            get { return Properties_.GetValueProperty<double>("Course"); }
-            set { Properties_.SetValueProperty<double>("Course", value); }
-        }
+        public double? Course { get; set; }
 
-        public double? Bearing
-        {
-            get { return Properties_.GetValueProperty<double>("Bearing"); }
-            set { Properties_.SetValueProperty<double>("Bearing", value); }
-        }
+        public double? Bearing { get; set; }
 
         public bool HasGarminExtensions
         {

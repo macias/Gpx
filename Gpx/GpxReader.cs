@@ -251,7 +251,7 @@ namespace Gpx
                                 route.Type = ReadContentAsString();
                                 break;
                             case "rtept":
-                                route.RoutePoints.Add(ReadGpxRoutePoint());
+                                route.Add(ReadGpxRoutePoint());
                                 break;
                             case "extensions":
                                 ReadRouteExtensions(route);
@@ -386,7 +386,7 @@ namespace Gpx
                         switch (Reader_.Name)
                         {
                             case "trkpt":
-                                segment.TrackPoints.Add(ReadGpxTrackPoint());
+                                segment.Add(ReadGpxTrackPoint());
                                 break;
                             case "extensions":
                                 ReadTrackSegmentExtensions();

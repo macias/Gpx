@@ -2,21 +2,26 @@
 
 namespace Gpx
 {
-    public sealed class Length
+    public struct Length
     {
+        private enum Unit
+        {
+            m,
+            km
+        }
         public static readonly Length Zero = Length.FromMeters(0);
 
         private const double kmScale = 1000;
 
         private readonly double value;
         private readonly double scale;
-        private readonly string unit;
+        private readonly Unit unit;
 
         public bool IsZero { get { return this.value == 0; } }
         public double Meters { get { return this.value*scale; } }
         public double Kilometers { get { return this.value * scale/ kmScale; } }
 
-        private Length(double meters,double scale,string unit)
+        private Length(double meters,double scale,Unit unit)
         {
             this.value = meters;
             this.scale = scale;
@@ -25,11 +30,11 @@ namespace Gpx
 
         public static Length FromMeters(double value)
         {
-            return new Length(value,1,"m");
+            return new Length(value,1,Unit.m);
         }
         public static Length FromKilometers(double value)
         {
-            return new Length(value, kmScale, "km");
+            return new Length(value, kmScale, Unit.km);
         }
 
         public static Length operator *(Length length, double amount)
@@ -53,7 +58,7 @@ namespace Gpx
         public override bool Equals(object obj)
         {
             if (this.GetType() == obj?.GetType())
-                return Equals(obj as Length);
+                return Equals((Length)obj);
             else
                 throw new ArgumentException();
         }

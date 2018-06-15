@@ -14,105 +14,40 @@ namespace Gpx
 {
     public class GpxPoint : GeoPoint
     {
-        protected GpxProperties Properties_ = new GpxProperties();
-
         public double? Elevation { get; set; }
         public DateTime? Time { get; set; }
 
-        public double? MagneticVar
-        {
-            get { return Properties_.GetValueProperty<double>("MagneticVar"); }
-            set { Properties_.SetValueProperty<double>("MagneticVar", value); }
-        }
+        public double? MagneticVar { get; set; }
 
-        public double? GeoidHeight
-        {
-            get { return Properties_.GetValueProperty<double>("GeoidHeight"); }
-            set { Properties_.SetValueProperty<double>("GeoidHeight", value); }
-        }
+        public double? GeoidHeight { get; set; }
 
-        public string Name
-        {
-            get { return Properties_.GetObjectProperty<string>("Name"); }
-            set { Properties_.SetObjectProperty<string>("Name", value); }
-        }
+        public string Name { get; set; }
 
-        public string Comment
-        {
-            get { return Properties_.GetObjectProperty<string>("Comment"); }
-            set { Properties_.SetObjectProperty<string>("Comment", value); }
-        }
+        public string Comment { get; set; }
 
-        public string Description
-        {
-            get { return Properties_.GetObjectProperty<string>("Description"); }
-            set { Properties_.SetObjectProperty<string>("Description", value); }
-        }
+        public string Description { get; set; }
 
-        public string Source
-        {
-            get { return Properties_.GetObjectProperty<string>("Source"); }
-            set { Properties_.SetObjectProperty<string>("Source", value); }
-        }
+        public string Source { get; set; }
 
-        public IList<GpxLink> Links
-        {
-            get { return Properties_.GetListProperty<GpxLink>("Links"); }
-        }
+        public IList<GpxLink> Links { get; }
 
-        public string Symbol
-        {
-            get { return Properties_.GetObjectProperty<string>("Symbol"); }
-            set { Properties_.SetObjectProperty<string>("Symbol", value); }
-        }
+        public string Symbol { get; set; }
 
-        public string Type
-        {
-            get { return Properties_.GetObjectProperty<string>("Type"); }
-            set { Properties_.SetObjectProperty<string>("Type", value); }
-        }
+        public string Type { get; set; }
 
-        public string FixType
-        {
-            get { return Properties_.GetObjectProperty<string>("FixType"); }
-            set { Properties_.SetObjectProperty<string>("FixType", value); }
-        }
+        public string FixType { get; set; }
 
-        public int? Satelites
-        {
-            get { return Properties_.GetValueProperty<int>("Satelites"); }
-            set { Properties_.SetValueProperty<int>("Satelites", value); }
-        }
+        public int? Satelites { get; set; }
 
-        public double? Hdop
-        {
-            get { return Properties_.GetValueProperty<double>("Hdop"); }
-            set { Properties_.SetValueProperty<double>("Hdop", value); }
-        }
+        public double? Hdop { get; set; }
 
-        public double? Vdop
-        {
-            get { return Properties_.GetValueProperty<double>("Vdop"); }
-            set { Properties_.SetValueProperty<double>("Vdop", value); }
-        }
+        public double? Vdop { get; set; }
 
-        public double? Pdop
-        {
-            get { return Properties_.GetValueProperty<double>("Pdop"); }
-            set { Properties_.SetValueProperty<double>("Pdop", value); }
-        }
+        public double? Pdop { get; set; }
 
-        public double? AgeOfData
-        {
-            get { return Properties_.GetValueProperty<double>("AgeOfData"); }
-            set { Properties_.SetValueProperty<double>("AgeOfData", value); }
-        }
+        public double? AgeOfData { get; set; }
 
-        public int? DgpsId
-        {
-            get { return Properties_.GetValueProperty<int>("DgpsId"); }
-            set { Properties_.SetValueProperty<int>("DgpsId", value); }
-        }
+        public int? DgpsId { get; set; }
 
         public GpxLink HttpLink
         {

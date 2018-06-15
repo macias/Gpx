@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Gpx
 {
@@ -142,5 +143,26 @@ namespace Gpx
             return Length.FromKilometers(min_distance);
         }
 
+
+        internal static IEnumerable<GpxPoint> ToGpxPoints<T>(this IEnumerable<T> points)
+            where T : GpxPoint
+        {
+            var result = new List<GpxPoint>();
+
+            foreach (T gpxPoint in points)
+            {
+                GpxPoint point = new GpxPoint
+                {
+                    Longitude = gpxPoint.Longitude,
+                    Latitude = gpxPoint.Latitude,
+                    Elevation = gpxPoint.Elevation,
+                    Time = gpxPoint.Time
+                };
+
+                result.Add(point);
+            }
+
+            return result;
+        }
     }
 }

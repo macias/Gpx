@@ -43,12 +43,14 @@
   <ItemGroup>
     <Compile Include="GpsLocation.cs" />
     <Compile Include="GeoPoint.cs" />
+    <Compile Include="GpxRoutePoint.cs" />
+    <Compile Include="GpxWayPoint.cs" />
+    <Compile Include="GpxPointCollection.cs" />
     <Compile Include="GpxPoint.cs" />
     <Compile Include="GpxTrackPoint.cs" />
     <Compile Include="GpxTrackSegment.cs" />
     <Compile Include="GpxTrack.cs" />
     <Compile Include="Gpx.cs" />
-    <Compile Include="GpxProperties.cs" />
     <Compile Include="GpxReader.cs" />
     <Compile Include="GpxWriter.cs" />
     <Compile Include="IGeopointExtensions.cs" />
