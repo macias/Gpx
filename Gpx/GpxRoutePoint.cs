@@ -6,20 +6,27 @@
 // in accordance with the terms of the license agreement accompanying it.
 // ==========================================================================
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Gpx
 {
-    public class GeoPoint : IGeoPoint
+    public sealed class GpxRoutePoint : GpxPoint
     {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        // GARMIN_EXTENSIONS
 
-        public GeoPoint()
+        public IList<GpxPoint> RoutePoints { get; }
+
+        public bool HasExtensions
         {
-
+            get { return RoutePoints.Count != 0; }
         }
-        public override string ToString()
+
+        public GpxRoutePoint()
         {
-            return Latitude.ToString() + "," + Longitude.ToString();
+            this.RoutePoints = new List<GpxPoint>();
         }
     }
+
 }

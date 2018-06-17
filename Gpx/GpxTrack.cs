@@ -21,13 +21,13 @@ namespace Gpx
             get { return segments; }
         }
 
-        public override GpxPointCollection<GpxPoint> ToGpxPoints()
+        public override IEnumerable<GpxPoint> ToGpxPoints()
         {
-            GpxPointCollection<GpxPoint> points = new GpxPointCollection<GpxPoint>();
+            var points = new List<GpxPoint>();
 
             foreach (GpxTrackSegment segment in segments)
             {
-                GpxPointCollection<GpxPoint> segmentPoints = segment.TrackPoints.ToGpxPoints();
+                IEnumerable<GpxPoint> segmentPoints = segment.TrackPoints.ToGpxPoints();
 
                 foreach (GpxPoint point in segmentPoints)
                 {

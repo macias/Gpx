@@ -6,20 +6,21 @@
 // in accordance with the terms of the license agreement accompanying it.
 // ==========================================================================
 
+using System;
+using System.Globalization;
+using System.IO;
+using System.Xml;
+
 namespace Gpx
 {
-    public class GeoPoint : IGeoPoint
+    public enum GpxObjectType
     {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        None,
+        Attributes,
+        Metadata,
+        WayPoint,
+        Route,
+        Track
+    };
 
-        public GeoPoint()
-        {
-
-        }
-        public override string ToString()
-        {
-            return Latitude.ToString() + "," + Longitude.ToString();
-        }
-    }
 }

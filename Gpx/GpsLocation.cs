@@ -50,7 +50,8 @@ namespace Gpx
             get { return Latitude_; }
             set
             {
-                if (!IsValidLatitude(value)) throw new ArgumentOutOfRangeException();
+                if (!IsValidLatitude(value))
+                    throw new ArgumentOutOfRangeException();
                 Latitude_ = value;
             }
         }
@@ -60,7 +61,8 @@ namespace Gpx
             get { return Longitude_; }
             set
             {
-                if (!IsValidLongitude(value)) throw new ArgumentOutOfRangeException();
+                if (!IsValidLongitude(value))
+                    throw new ArgumentOutOfRangeException();
                 Longitude_ = NormalizeLongitude(value);
             }
         }
@@ -133,16 +135,20 @@ namespace Gpx
         {
             result = new GpsLocation();
 
-            if (string.IsNullOrEmpty(s)) return false;
+            if (string.IsNullOrEmpty(s))
+                return false;
 
             int pos = 0;
 
             double latitude = double.NaN;
             double longitude = double.NaN;
 
-            if (!TryParseGpsFragment(s, ref pos, ref latitude, ref longitude)) return false;
-            if (!TryParseGpsFragment(s, ref pos, ref latitude, ref longitude)) return false;
-            if (!IsValidLatitude(latitude) || !IsValidLongitude(longitude)) return false;
+            if (!TryParseGpsFragment(s, ref pos, ref latitude, ref longitude))
+                return false;
+            if (!TryParseGpsFragment(s, ref pos, ref latitude, ref longitude))
+                return false;
+            if (!IsValidLatitude(latitude) || !IsValidLongitude(longitude))
+                return false;
 
             result.Latitude = latitude;
             result.Longitude = longitude;
@@ -176,12 +182,14 @@ namespace Gpx
 
         public string ToString(string format)
         {
-            if (string.IsNullOrEmpty(format) || format.ToUpper() == "G") return ToGeneralString();
+            if (string.IsNullOrEmpty(format) || format.ToUpper() == "G")
+                return ToGeneralString();
 
             if (char.ToUpper(format[0]) == 'L')
             {
                 int precision;
-                if (!int.TryParse(format.Substring(1), out precision)) throw new FormatException();
+                if (!int.TryParse(format.Substring(1), out precision))
+                    throw new FormatException();
                 return ToFixedPointString(precision);
             }
 
@@ -242,7 +250,8 @@ namespace Gpx
             result = 0;
 
             double degrees;
-            if (!TryParseValue(s, ref pos, out degrees)) return false;
+            if (!TryParseValue(s, ref pos, out degrees))
+                return false;
 
             if (pos == s.Length || char.IsWhiteSpace(s, pos))
             {
@@ -250,7 +259,8 @@ namespace Gpx
                 return true;
             }
 
-            if (s[pos++] != DEGREES_SIGN) return false;
+            if (s[pos++] != DEGREES_SIGN)
+                return false;
 
             double minutes;
             if (!TryParseValue(s, ref pos, out minutes))
@@ -259,7 +269,8 @@ namespace Gpx
                 return true;
             }
 
-            if (s[pos++] != MINUTES_SIGN) return false;
+            if (s[pos++] != MINUTES_SIGN)
+                return false;
 
             double seconds;
             if (!TryParseValue(s, ref pos, out seconds))
@@ -268,7 +279,8 @@ namespace Gpx
                 return true;
             }
 
-            if (s[pos++] != SECONDS_SIGN) return false;
+            if (s[pos++] != SECONDS_SIGN)
+                return false;
 
             result = degrees + (minutes + seconds / 60) / 60;
             return true;

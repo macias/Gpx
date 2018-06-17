@@ -7,22 +7,32 @@
 // ==========================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Gpx
 {
     public sealed class GpxTrackSegment
     {
-        private readonly GpxPointCollection<GpxTrackPoint> trackPoints = new GpxPointCollection<GpxTrackPoint>();
+        private readonly List<GpxTrackPoint> points;
+        public IReadOnlyList<GpxTrackPoint> TrackPoints => this.points;
 
-        public GpxPointCollection<GpxTrackPoint> TrackPoints
+        public GpxTrackSegment(IEnumerable<GpxTrackPoint> points)
         {
-            get { return trackPoints; }
+            this.points = points.ToList();
         }
+        public GpxTrackSegment() : this(Enumerable.Empty<GpxTrackPoint>())
+        {
 
+        }
         public override string ToString()
         {
             return String.Join(" ", TrackPoints.Select(it => "(" + it.ToString() + ")"));
+        }
+
+        internal void Add(GpxTrackPoint point)
+        {
+            this.points.Add(point);
         }
     }
 

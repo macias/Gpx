@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Gpx
 {
@@ -11,11 +12,21 @@ namespace Gpx
         {
             return radians / Radian;
         }
+
         private static double degreesToRadians(double degrees)
         {
             return degrees * Radian;
         }
-        public static Length GetDistance(this IGeoPoint @this, IGeoPoint other)
+
+        public static string ToString<P>(this P point, string format)
+            where P : IGeoPoint
+        {
+            return point.Latitude.ToString(format) + "," + point.Longitude.ToString(format);
+        }
+
+        public static Length GetDistance<P1,P2>(this P1 @this, P2 other)
+            where P1 : IGeoPoint
+            where P2: IGeoPoint
         {
             // https://en.wikipedia.org/wiki/Great-circle_distance#Computational_formulas
 
@@ -49,13 +60,16 @@ namespace Gpx
             return EarthRadius * delta_sigma;
         }
 
-        public static Length GetDistanceToArcSegment(this IGeoPoint p3, IGeoPoint p1, IGeoPoint p2)
+        public static Length GetDistanceToArcSegment<P1,P2,P3>(this P3 p3, P1 p1, P2 p2)
+            where P1 : IGeoPoint
+            where P2 : IGeoPoint
+            where P3 : IGeoPoint
         {
             // http://stackoverflow.com/questions/32771458/distance-from-lat-lng-point-to-minor-arc-segment
             // CROSSARC Calculates the shortest distance in meters 
             // between an arc (defined by p1 and p2) and a third point, p3.
 
-            double R = EarthRadius.Meters; 
+            double R = EarthRadius.Meters;
 
             // Prerequisites for the formulas
             double bear12 = GetBearing(p1, p2);
@@ -78,7 +92,11 @@ namespace Gpx
                     return Length.FromMeters(Math.Abs(dxt));
             }
         }
-        public static Length GetDistanceToArc(this IGeoPoint p3, IGeoPoint p1, IGeoPoint p2)
+
+        public static Length GetDistanceToArc<P1,P2,P3>(this P3 p3, P1 p1, P2 p2)
+            where P1 : IGeoPoint
+            where P2 : IGeoPoint
+            where P3 : IGeoPoint
         {
             // http://stackoverflow.com/questions/32771458/distance-from-lat-lng-point-to-minor-arc-segment
             // simplification of the above
@@ -95,7 +113,9 @@ namespace Gpx
             return Length.FromMeters(Math.Abs(dxt));
         }
 
-        private static double GetBearing(IGeoPoint a,IGeoPoint b) // Finds the bearing from one lat/lon point to another.
+        private static double GetBearing<P1,P2>(P1 a, P2 b) // Finds the bearing from one lat/lon point to another.
+                  where P1 : IGeoPoint
+                  where P2 : IGeoPoint
         {
             // http://stackoverflow.com/questions/32771458/distance-from-lat-lng-point-to-minor-arc-segment
             double latA = degreesToRadians(a.Latitude);
@@ -106,7 +126,11 @@ namespace Gpx
             return Math.Atan2(Math.Sin(lonB - lonA) * Math.Cos(latB),
                 Math.Cos(latA) * Math.Sin(latB) - Math.Sin(latA) * Math.Cos(latB) * Math.Cos(lonB - lonA));
         }
-        public static Length GetDistanceToArc_BUGGY(this IGeoPoint @this, IGeoPoint start, IGeoPoint end) 
+
+        public static Length GetDistanceToArc_BUGGY<P1,P2,P3>(this P1 @this, P2 start, P3 end)
+                    where P1 : IGeoPoint
+                    where P2 : IGeoPoint
+                    where P3 : IGeoPoint
         {
             // this method is buggy (a,s,e) gives other outcome than (a,e,s)
 
@@ -142,5 +166,25 @@ namespace Gpx
             return Length.FromKilometers(min_distance);
         }
 
+        internal static IEnumerable<GpxPoint> ToGpxPoints<T>(this IEnumerable<T> points)
+            where T : GpxPoint
+        {
+            var result = new List<GpxPoint>();
+
+            foreach (T gpxPoint in points)
+            {
+                GpxPoint point = new GpxPoint
+                {
+                    Longitude = gpxPoint.Longitude,
+                    Latitude = gpxPoint.Latitude,
+                    Elevation = gpxPoint.Elevation,
+                    Time = gpxPoint.Time
+                };
+
+                result.Add(point);
+            }
+
+            return result;
+        }
     }
 }

@@ -1,12 +1,8 @@
-﻿using System;
-
-namespace Gpx
+﻿namespace Gpx
 {
     public interface IGeoPoint
     {
-        double Latitude { get; set; } // degrees
-        double Longitude { get; set; }
-
-        string ToString(string format);
+        double Latitude { get; } // degrees
+        double Longitude { get; }
     }
 }
