@@ -4,96 +4,110 @@ namespace Gpx
 {
     public struct Length
     {
-        private enum Unit
+        public static readonly Length Zero = new Length(0);
+
+        private readonly double meters;
+
+        public bool IsZero => this.meters == 0;
+        public double Meters => this.meters;
+        public double Kilometers => this.meters / 1000.0;
+
+        private Length(double meters)
         {
-            m,
-            km
-        }
-        public static readonly Length Zero = Length.FromMeters(0);
-
-        private const double kmScale = 1000;
-
-        private readonly double value;
-        private readonly double scale;
-        private readonly Unit unit;
-
-        public bool IsZero { get { return this.value == 0; } }
-        public double Meters { get { return this.value*scale; } }
-        public double Kilometers { get { return this.value * scale/ kmScale; } }
-
-        private Length(double meters,double scale,Unit unit)
-        {
-            this.value = meters;
-            this.scale = scale;
-            this.unit = unit;
+            this.meters = meters;
         }
 
-        public static Length FromMeters(double value)
+        public static Length FromMeters(double meters)
         {
-            return new Length(value,1,Unit.m);
+            return new Length(meters);
         }
-        public static Length FromKilometers(double value)
+        public static Length FromKilometers(double kilometers)
         {
-            return new Length(value, kmScale, Unit.km);
+            return new Length(kilometers * 1000.0);
         }
 
-        public static Length operator *(Length length, double amount)
+        public static Length operator *(Length length, double scalar)
         {
-            return new Length(length.value * amount, length.scale, length.unit);
+            return new Length(length.meters * scalar);
         }
-        public static Length operator /(Length length, double amount)
+        public static Length operator *(double scalar, Length length)
         {
-            return new Length(length.value / amount, length.scale, length.unit);
+            return new Length(length.meters * scalar);
+        }
+        public static Length operator /(Length length, double scalar)
+        {
+            return new Length(length.meters / scalar);
         }
         public static Length operator +(Length len1, Length len2)
         {
-            return new Length(len1.value + len2.value*len1.scale/len2.scale, len1.scale, len1.unit);
+            return new Length(len1.meters + len2.meters);
+        }
+        public static Length operator -(Length len1, Length len2)
+        {
+            return new Length(len1.meters - len2.meters);
+        }
+        public static Length operator -(Length len)
+        {
+            return new Length(-len.meters);
         }
 
-        public static bool operator>(Length a,Length b)
+        public static Length Max(Length len1, Length len2)
         {
-            return a.Meters > b.Meters;
+            return new Length(Math.Max(len1.meters, len2.meters));
+        }
+        public static Length Min(Length len1, Length len2)
+        {
+            return new Length(Math.Min(len1.meters, len2.meters));
+        }
+        public Length Abs()
+        {
+            return new Length(Math.Abs(this.meters));
+        }
+
+        public static bool operator >(Length a, Length b)
+        {
+            return a.meters > b.meters;
         }
         public static bool operator >=(Length a, Length b)
         {
-            return a.Meters >= b.Meters;
+            return a.meters >= b.meters;
         }
         public static bool operator <(Length a, Length b)
         {
-            return a.Meters < b.Meters;
+            return a.meters < b.meters;
         }
         public static bool operator <=(Length a, Length b)
         {
-            return a.Meters <= b.Meters;
+            return a.meters <= b.meters;
         }
         public static bool operator ==(Length a, Length b)
         {
-            return a.Meters == b.Meters;
+            return a.meters == b.meters;
         }
         public static bool operator !=(Length a, Length b)
         {
-            return a.Meters != b.Meters;
+            return a.meters != b.meters;
         }
 
         public override string ToString()
         {
-            return ToString("0.00");
+            return $"{this.meters}m";
         }
         public string ToString(string format)
         {
-            return value.ToString(format) + unit;
+            return $"{meters.ToString(format)}m";
         }
 
         public override bool Equals(object obj)
         {
-            if (this.GetType() == obj?.GetType())
-                return Equals((Length)obj);
+            if (obj is Length length)
+                return Equals(length);
             else
-                throw new ArgumentException();
+                return false;
         }
         public bool Equals(Length obj)
         {
-            return this == obj;
+            return this.meters == obj.meters;
         }
         public override int GetHashCode()
         {

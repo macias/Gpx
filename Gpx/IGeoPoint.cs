@@ -2,7 +2,7 @@
 {
     public interface IGeoPoint
     {
-        double Latitude { get; } // degrees
-        double Longitude { get; }
+        Angle Latitude { get; } 
+        Angle Longitude { get; }
     }
 }

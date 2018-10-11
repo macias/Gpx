@@ -9,14 +9,12 @@
 
 namespace Gpx
 {
-    public enum GpxObjectType
+
+    public class GpxCopyright
     {
-        None,
-        Attributes,
-        Metadata,
-        WayPoint,
-        Route,
-        Track
-    };
+        public string Author { get; set; }
+        public int? Year { get; set; }
+        public string Licence { get; set; }
+    }
 
 }

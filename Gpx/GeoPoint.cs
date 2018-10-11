@@ -10,8 +10,8 @@ namespace Gpx
 {
     public class GeoPoint : IGeoPoint
     {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public Angle Latitude { get; set; }
+        public Angle Longitude { get; set; }
 
         public GeoPoint()
         {

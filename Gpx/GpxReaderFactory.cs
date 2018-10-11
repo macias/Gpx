@@ -6,17 +6,15 @@
 // in accordance with the terms of the license agreement accompanying it.
 // ==========================================================================
 
+using System.IO;
 
 namespace Gpx
 {
-    public enum GpxObjectType
+    public sealed class GpxReaderFactory
     {
-        None,
-        Attributes,
-        Metadata,
-        WayPoint,
-        Route,
-        Track
-    };
-
+        public static IGpxReader Create(Stream stream)
+        {
+            return new Implementation.GpxReader(stream);
+        }
+    }
 }

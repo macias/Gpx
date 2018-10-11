@@ -41,8 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GeoCalculator.Vector.cs" />
     <Compile Include="GpsLocation.cs" />
     <Compile Include="GeoPoint.cs" />
+    <Compile Include="Angle.cs" />
+    <Compile Include="GpxColor.cs" />
+    <Compile Include="GpxBounds.cs" />
+    <Compile Include="GpxCopyright.cs" />
     <Compile Include="GpxObjectType.cs" />
     <Compile Include="GpxRoutePoint.cs" />
     <Compile Include="GpxWayPoint.cs" />
@@ -51,15 +56,25 @@
     <Compile Include="GpxTrackSegment.cs" />
     <Compile Include="GpxTrack.cs" />
     <Compile Include="Gpx.cs" />
-    <Compile Include="GpxReader.cs" />
+    <Compile Include="GpxReaderFactory.cs" />
     <Compile Include="GpxWriter.cs" />
-    <Compile Include="IGeopointExtensions.cs" />
+    <Compile Include="GeoCalculator.cs" />
     <Compile Include="IGeoPoint.cs" />
+    <Compile Include="IGpxReader.cs" />
+    <Compile Include="Implementation\GpxReader.cs" />
     <Compile Include="Length.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="LICENSE.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
 </Project>
