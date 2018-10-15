@@ -38,6 +38,10 @@ namespace Gpx
         {
             return new Length(length.meters / scalar);
         }
+        public static double operator /(Length a, Length b)
+        {
+            return a.meters / b.meters;
+        }
         public static Length operator +(Length len1, Length len2)
         {
             return new Length(len1.meters + len2.meters);

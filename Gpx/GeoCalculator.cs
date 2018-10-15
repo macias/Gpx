@@ -92,7 +92,7 @@ namespace Gpx
             Vector s = crossProduct(startA, endA);
             Vector t = crossProduct(startB, endB);
 
-           Vector d = s.CrossProduct(t);
+            Vector d = s.CrossProduct(t);
 
             if (d == Vector.Zero)
             {
@@ -186,8 +186,32 @@ namespace Gpx
 
             return EarthRadius * Math.Abs(delta_sigma);
         }
+        public static IGeoPoint GetDestinationPoint<P>(P point, Angle bearing, Length distance)
+            where P : IGeoPoint
+        {
+            var φ1 = point.Latitude;
+            var λ1 = point.Longitude;
+            // https://www.movable-type.co.uk/scripts/latlong.html
+            double d_cos = Math.Cos(distance / EarthRadius);
+            double d_sin = Math.Sin(distance / EarthRadius);
+            double φ1_sin = φ1.Sin();
+            double φ1_cos = φ1.Cos();
+            var φ2 = Angle.FromRadians(Math.Asin(φ1_sin * d_cos + φ1_cos * d_sin * bearing.Cos()));
+            var λ2 = λ1 + Angle.FromRadians(Math.Atan2(bearing.Sin() * d_sin * φ1_cos, d_cos - φ1_sin * φ2.Sin()));
 
-        public static Length GetDistanceToArcSegment<P1, P2, P3>(this P3 point, P1 segmentStart, P2 segmentEnd)
+            return new GeoPoint() { Latitude = φ2, Longitude = λ2 };
+        }
+
+        public static Length GetDistanceToArcSegment<P1, P2, P3>(this P3 point, P1 segmentStart, P2 segmentEnd,
+            out IGeoPoint crossPoint)
+            where P1 : IGeoPoint
+            where P2 : IGeoPoint
+            where P3 : IGeoPoint
+        {
+            return GetDistanceToArcSegment(point, segmentStart, segmentEnd, out crossPoint, computeCrossPoint: true);
+        }
+        private static Length GetDistanceToArcSegment<P1, P2, P3>(this P3 point, P1 segmentStart, P2 segmentEnd,
+            out IGeoPoint crossPoint,bool computeCrossPoint)
             where P1 : IGeoPoint
             where P2 : IGeoPoint
             where P3 : IGeoPoint
@@ -205,7 +229,10 @@ namespace Gpx
 
             // Is relative bearing obtuse?
             if (Math.Abs(bear13 - bear12) > (Math.PI / 2))
+            {
+                crossPoint = segmentStart;
                 return dis13;
+            }
             else
             {
                 // Find the cross-track distance.
@@ -214,10 +241,28 @@ namespace Gpx
                 Length dis12 = segmentStart.GetDistance(segmentEnd);
                 double dis14 = Math.Acos(Math.Cos(dis13.Meters / R) / Math.Cos(dxt / R)) * R;
                 if (dis14 > dis12.Meters)
+                {
+                    crossPoint = segmentEnd;
                     return segmentEnd.GetDistance(point);
+                }
                 else
+                {
+                    crossPoint = computeCrossPoint
+                        ? GetDestinationPoint(segmentStart, Angle.FromRadians(bear12), Length.FromMeters(dis14))
+                        : null;
+
                     return Length.FromMeters(Math.Abs(dxt));
+                }
             }
+        }
+
+
+        public static Length GetDistanceToArcSegment<P1, P2, P3>(this P3 point, P1 segmentStart, P2 segmentEnd)
+            where P1 : IGeoPoint
+            where P2 : IGeoPoint
+            where P3 : IGeoPoint
+        {
+            return GetDistanceToArcSegment(point, segmentStart, segmentEnd, out _,computeCrossPoint: false);
         }
 
         public static Length GetDistanceToArc<P1, P2, P3>(this P3 point, P1 arcA, P2 arcB)
