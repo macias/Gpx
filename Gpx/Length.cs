@@ -4,6 +4,8 @@ namespace Gpx
 {
     public struct Length
     {
+        public static readonly Length MinValue = new Length(double.MinValue);
+        public static readonly Length MaxValue = new Length(double.MaxValue);
         public static readonly Length Zero = new Length(0);
 
         private readonly double meters;
@@ -116,6 +118,15 @@ namespace Gpx
         public override int GetHashCode()
         {
             return this.Meters.GetHashCode();
+        }
+
+        public Length Min(Length other)
+        {
+            return this < other ? this : other;
+        }
+        public Length Max(Length other)
+        {
+            return this > other ? this : other;
         }
     }
 }

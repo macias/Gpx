@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace Gpx
 {
-    public struct Angle
+    public struct Angle : IEquatable<Angle>,IComparable<Angle>
     {
         public static readonly Angle Zero = new Angle(0);
 
@@ -24,6 +24,16 @@ namespace Gpx
         private double radians;
 
         public double Degrees => this.radians * 180 / Math.PI;
+
+        public Angle Min(Angle other)
+        {
+            return this < other ? this : other;
+        }
+        public Angle Max(Angle other)
+        {
+            return this > other ? this : other;
+        }
+
         public double Radians => this.radians;
 
         private Angle(double radians)
@@ -48,11 +58,36 @@ namespace Gpx
         {
             return new Angle(-a.radians);
         }
+
+        public Angle Abs()
+        {
+            return this >= Angle.Zero ? this : -this;
+        }
         public static Angle operator +(Angle a, Angle b)
         {
             return new Angle(a.radians + b.radians);
         }
+        public static bool operator <(Angle a, Angle b)
+        {
+            return a.Radians < b.Radians;
+        }
+        public static bool operator <=(Angle a, Angle b)
+        {
+            return a.Radians <= b.Radians;
+        }
+        public static bool operator >(Angle a, Angle b)
+        {
+            return a.Radians > b.Radians;
+        }
+        public static bool operator >=(Angle a, Angle b)
+        {
+            return a.Radians >= b.Radians;
+        }
 
+        public static double operator /(Angle a, Angle b)
+        {
+            return a.radians / b.radians;
+        }
         public static Angle operator *(Angle a, double scalar)
         {
             return new Angle(a.radians * scalar);
@@ -99,14 +134,19 @@ namespace Gpx
             return this.radians.GetHashCode();
         }
 
-        public static bool operator ==(Angle a,Angle b)
+        public int CompareTo(Angle other)
+        {
+            return this.Radians.CompareTo(other.Radians);
+        }
+
+        public static bool operator ==(Angle a, Angle b)
         {
             return a.Equals(b);
         }
 
         public static bool operator !=(Angle a, Angle b)
         {
-            return !(a==b);
+            return !(a == b);
         }
     }
 }
