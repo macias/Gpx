@@ -3,14 +3,15 @@ using System.Threading.Tasks;
 
 namespace Gpx
 {
-    public interface IGpxReader
+    public interface IGpxAsyncReader 
     {
         GpxAttributes Attributes { get; }
         GpxMetadata Metadata { get; }
+        GpxObjectType ObjectType { get; }
         GpxRoute Route { get; }
         GpxTrack Track { get; }
         GpxWayPoint WayPoint { get; }
 
-        bool Read(out GpxObjectType type);
+        Task<bool> ReadAsync();
     }
 }

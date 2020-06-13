@@ -1,21 +1,17 @@
-﻿// ==========================================================================
-// Copyright (c) 2011-2016, dlg.krakow.pl
-// All Rights Reserved
-//
-// NOTICE: dlg.krakow.pl permits you to use, modify, and distribute this file
-// in accordance with the terms of the license agreement accompanying it.
-// ==========================================================================
-
+﻿using MathUnit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Gpx
 {
-    public class GpxPoint : GeoPoint
+    public class GpxPoint : IGpxPoint 
     {
+        public Angle Latitude { get; set; }
+        public Angle Longitude { get; set; }
+
         public double? Elevation { get; set; }
-        public DateTime? Time { get; set; }
+        public DateTimeOffset? Time { get; set; }
 
         public double? MagneticVar { get; set; }
 
@@ -30,6 +26,7 @@ namespace Gpx
         public string Source { get; set; }
 
         public IList<GpxLink> Links { get; }
+        IEnumerable<GpxLink> IGpxPoint.Links => this.Links;
 
         public string Symbol { get; set; }
 
@@ -71,6 +68,11 @@ namespace Gpx
             this.Links = new List<GpxLink>();
         }
 
-     }
+        public override string ToString()
+        {
+            return Latitude.ToString() + "," + Longitude.ToString();
+        }
+
+    }
 
 }

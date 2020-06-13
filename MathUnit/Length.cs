@@ -1,17 +1,20 @@
 ﻿using System;
 
-namespace Gpx
+namespace MathUnit
 {
-    public struct Length
+    public readonly struct Length : IComparable<Length>
     {
         public static readonly Length MinValue = new Length(double.MinValue);
         public static readonly Length MaxValue = new Length(double.MaxValue);
+        public static readonly Length PositiveInfinity = new Length(double.PositiveInfinity);
         public static readonly Length Zero = new Length(0);
 
         private readonly double meters;
 
         public bool IsZero => this.meters == 0;
+        public bool IsPositiveInfinity => double.IsPositiveInfinity(this.meters);
         public double Meters => this.meters;
+        public double Millimeters => this.meters * 1000.0;
         public double Kilometers => this.meters / 1000.0;
 
         private Length(double meters)
@@ -26,6 +29,10 @@ namespace Gpx
         public static Length FromKilometers(double kilometers)
         {
             return new Length(kilometers * 1000.0);
+        }
+        public static Length FromMillimeter(double millimeter)
+        {
+            return new Length(millimeter / 1000.0);
         }
 
         public static Length operator *(Length length, double scalar)
@@ -43,6 +50,10 @@ namespace Gpx
         public static double operator /(Length a, Length b)
         {
             return a.meters / b.meters;
+        }
+        public static Speed operator /(Length len, TimeSpan time)
+        {
+            return Speed.FromMetersPerSecond( len.meters / time.TotalSeconds);
         }
         public static Length operator +(Length len1, Length len2)
         {
@@ -127,6 +138,16 @@ namespace Gpx
         public Length Max(Length other)
         {
             return this > other ? this : other;
+        }
+
+        public int CompareTo(Length other)
+        {
+            return this.meters.CompareTo(other.meters);
+        }
+
+        public int Sign()
+        {
+            return Math.Sign(this.meters);
         }
     }
 }

@@ -1,5 +1,4 @@
-Gpx/bin/
-Gpx/obj/
-Tests/bin/
-Tests/obj/
+.vs
+**/bin/
+**/obj/
 

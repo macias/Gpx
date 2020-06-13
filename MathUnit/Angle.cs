@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Gpx
+namespace MathUnit
 {
-    public struct Angle : IEquatable<Angle>,IComparable<Angle>
+    public readonly struct Angle : IEquatable<Angle>, IComparable<Angle>
     {
-        public static readonly Angle Zero = new Angle(0);
+        public static Angle Zero { get; } = new Angle(0);
+        public static Angle PI { get; } = Angle.FromRadians(Math.PI);
 
         public static Angle FromDegrees(double degrees)
         {
@@ -21,7 +22,7 @@ namespace Gpx
             return new Angle(radians);
         }
 
-        private double radians;
+        private readonly double radians;
 
         public double Degrees => this.radians * 180 / Math.PI;
 

@@ -1,19 +1,11 @@
-﻿// ==========================================================================
-// Copyright (c) 2011-2016, dlg.krakow.pl
-// All Rights Reserved
-//
-// NOTICE: dlg.krakow.pl permits you to use, modify, and distribute this file
-// in accordance with the terms of the license agreement accompanying it.
-// ==========================================================================
-
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Xml;
 
-namespace Gpx
+namespace Gpx.Implementation
 {
-    public class GpxWriter : IDisposable
+    internal sealed class GpxWriter : IGpxWriter,IDisposable
     {
         private const string GPX_VERSION = "1.1";
         private const string GPX_CREATOR = "http://dlg.krakow.pl/gpx";
@@ -342,9 +334,14 @@ namespace Gpx
             Writer_.WriteEndElement();
         }
 
+        private static string ToGpxDateString(DateTimeOffset date)
+        {
+            return date.ToUniversalTime().ToString("yyyy-MM-ddTHH':'mm':'ss.FFFZ");
+            //return string.Format("{0:D4}-{1:D2}-{2:D2}T{3:D2}:{4:D2}:{5:D2}", date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second);
+        }
         private static string ToGpxDateString(DateTime date)
         {
-            return date.ToString("yyyy-MM-ddTHH':'mm':'ss.FFFZ");
+            return date.ToUniversalTime().ToString("yyyy-MM-ddTHH':'mm':'ss.FFFZ");
             //return string.Format("{0:D4}-{1:D2}-{2:D2}T{3:D2}:{4:D2}:{5:D2}", date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second);
         }
     }

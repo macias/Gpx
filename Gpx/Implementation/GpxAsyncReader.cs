@@ -7,21 +7,20 @@ using System.Xml;
 
 namespace Gpx.Implementation
 {
-    // this reader is around x6 faster than async version, not Task flying around, GC can rest
-    internal sealed class GpxReader : IGpxReader,IDisposable
+    internal sealed class GpxAsyncReader : IGpxAsyncReader,IDisposable
     {
         private readonly XmlReader reader;
 
-        private GpxObjectType objectType;
+        public GpxObjectType ObjectType { get; private set; }
         public GpxAttributes Attributes { get; private set; }
         public GpxMetadata Metadata { get; private set; }
         public GpxWayPoint WayPoint { get; private set; }
         public GpxRoute Route { get; private set; }
         public GpxTrack Track { get; private set; }
 
-        public GpxReader(MemoryStream stream)
+        public GpxAsyncReader(Stream stream)
         {
-            reader = XmlReader.Create(stream, new XmlReaderSettings() { Async = false });
+            reader = XmlReader.Create(stream, new XmlReaderSettings() { Async = true });
         }
 
         public void Dispose()
@@ -29,27 +28,18 @@ namespace Gpx.Implementation
             reader.Dispose();
         }
 
-        public bool Read(out GpxObjectType type)
-        {
-            bool result = doRead();
-            type = this.objectType;
-            return result;
-        }
-
-        private  bool doRead()
+        public async Task<bool> ReadAsync()
         {
             if (this.Attributes == null)
             {
-                ReadHeader();
+                await ReadHeaderAsync().ConfigureAwait(false);
                 return true;
             }
 
-            if (objectType == GpxObjectType.None)
-            {
+            if (ObjectType == GpxObjectType.None)
                 return false;
-            }
 
-            while (reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -58,23 +48,23 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "metadata":
-                                Metadata =  ReadGpxMetadata();
-                                objectType = GpxObjectType.Metadata;
+                                Metadata = await ReadGpxMetadataAsync().ConfigureAwait(false);
+                                ObjectType = GpxObjectType.Metadata;
                                 return true;
                             case "wpt":
-                                WayPoint =  ReadGpxWayPoint();
-                                objectType = GpxObjectType.WayPoint;
+                                WayPoint = await ReadGpxWayPointAsync().ConfigureAwait(false);
+                                ObjectType = GpxObjectType.WayPoint;
                                 return true;
                             case "rte":
-                                Route =  ReadGpxRoute();
-                                objectType = GpxObjectType.Route;
+                                Route = await ReadGpxRouteAsync().ConfigureAwait(false);
+                                ObjectType = GpxObjectType.Route;
                                 return true;
                             case "trk":
-                                Track =  ReadGpxTrack();
-                                objectType = GpxObjectType.Track;
+                                Track = await ReadGpxTrackAsync().ConfigureAwait(false);
+                                ObjectType = GpxObjectType.Track;
                                 return true;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -83,18 +73,18 @@ namespace Gpx.Implementation
                     case XmlNodeType.EndElement:
                         if (reader.Name != "gpx")
                             throw new FormatException(reader.Name);
-                        objectType = GpxObjectType.None;
+                        ObjectType = GpxObjectType.None;
                         return false;
                 }
             }
 
-            objectType = GpxObjectType.None;
+            ObjectType = GpxObjectType.None;
             return false;
         }
 
-        private void ReadHeader()
+        private async Task ReadHeaderAsync()
         {
-            while (reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -103,7 +93,7 @@ namespace Gpx.Implementation
                             throw new FormatException(reader.Name);
 
                         Attributes = ReadGpxAttributes();
-                        objectType = GpxObjectType.Attributes;
+                        ObjectType = GpxObjectType.Attributes;
                         return;
                 }
             }
@@ -131,7 +121,7 @@ namespace Gpx.Implementation
             return attributes;
         }
 
-        private GpxMetadata ReadGpxMetadata()
+        private async Task<GpxMetadata> ReadGpxMetadataAsync()
         {
             GpxMetadata metadata = new GpxMetadata();
             if (reader.IsEmptyElement)
@@ -139,7 +129,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while (reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -148,31 +138,31 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "name":
-                                metadata.Name = ReadContentAsString();
+                                metadata.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "desc":
-                                metadata.Description = ReadContentAsString();
+                                metadata.Description =await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "author":
-                                metadata.Author = ReadGpxPerson();
+                                metadata.Author =await ReadGpxPersonAsync().ConfigureAwait(false);
                                 break;
                             case "copyright":
-                                metadata.Copyright =ReadGpxCopyright();
+                                metadata.Copyright =await ReadGpxCopyrightAsync().ConfigureAwait(false);
                                 break;
                             case "link":
-                                metadata.Link =  ReadGpxLink();
+                                metadata.Link = await ReadGpxLinkAsync().ConfigureAwait(false);
                                 break;
                             case "time":
-                                metadata.Time = ReadContentAsDateTime();
+                                metadata.Time =await ReadContentAsDateTimeAsync().ConfigureAwait(false);
                                 break;
                             case "keywords":
-                                metadata.Keywords =  ReadContentAsString();
+                                metadata.Keywords = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "bounds":
                                 ReadGpxBounds();
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -188,7 +178,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private  GpxWayPoint ReadGpxWayPoint()
+        private async Task<GpxWayPoint> ReadGpxWayPointAsync()
         {
             string elementName = reader.Name;
             bool isEmptyElement = reader.IsEmptyElement;
@@ -198,7 +188,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return wayPoint;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -207,11 +197,11 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "extensions":
-                                 ReadWayPointExtensions(wayPoint);
+                                await ReadWayPointExtensionsAsync(wayPoint).ConfigureAwait(false);
                                 break;
                             default:
-                                if (! ProcessPointField(wayPoint))
-                                     SkipElement();
+                                if (!await ProcessPointFieldAsync(wayPoint).ConfigureAwait(false))
+                                    await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -227,7 +217,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxRoute ReadGpxRoute()
+        private async Task<GpxRoute> ReadGpxRouteAsync()
         {
             GpxRoute route = new GpxRoute();
             if (reader.IsEmptyElement)
@@ -235,7 +225,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -244,34 +234,34 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "name":
-                                route.Name =  ReadContentAsString();
+                                route.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "cmt":
-                                route.Comment =  ReadContentAsString();
+                                route.Comment = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "desc":
-                                route.Description =  ReadContentAsString();
+                                route.Description = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "src":
-                                route.Source =  ReadContentAsString();
+                                route.Source = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "link":
-                                route.Links.Add( ReadGpxLink());
+                                route.Links.Add(await ReadGpxLinkAsync().ConfigureAwait(false));
                                 break;
                             case "number":
-                                route.Number =  ReadContentAsInt();
+                                route.Number = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "type":
-                                route.Type =  ReadContentAsString();
+                                route.Type = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "rtept":
-                                route.Add( ReadGpxRoutePoint());
+                                route.Add(await ReadGpxRoutePointAsync().ConfigureAwait(false));
                                 break;
                             case "extensions":
-                                 ReadRouteExtensions(route);
+                                await ReadRouteExtensionsAsync(route).ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -287,7 +277,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxRoutePoint ReadGpxRoutePoint()
+        private async Task<GpxRoutePoint> ReadGpxRoutePointAsync()
         {
             string elementName = reader.Name;
             bool isEmptyElement = reader.IsEmptyElement;
@@ -297,7 +287,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return routePoint;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -306,11 +296,11 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "extensions":
-                                 ReadRoutePointExtensions(routePoint);
+                                await ReadRoutePointExtensionsAsync(routePoint).ConfigureAwait(false);
                                 break;
                             default:
-                                if (! ProcessPointField(routePoint))
-                                     SkipElement();
+                                if (!await ProcessPointFieldAsync(routePoint).ConfigureAwait(false))
+                                    await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -326,7 +316,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxTrack ReadGpxTrack()
+        private async Task<GpxTrack> ReadGpxTrackAsync()
         {
             GpxTrack track = new GpxTrack();
             if (reader.IsEmptyElement)
@@ -334,7 +324,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -343,34 +333,34 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "name":
-                                track.Name =  ReadContentAsString();
+                                track.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "cmt":
-                                track.Comment =  ReadContentAsString();
+                                track.Comment = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "desc":
-                                track.Description =  ReadContentAsString();
+                                track.Description = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "src":
-                                track.Source =  ReadContentAsString();
+                                track.Source = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "link":
-                                track.Links.Add( ReadGpxLink());
+                                track.Links.Add(await ReadGpxLinkAsync().ConfigureAwait(false));
                                 break;
                             case "number":
-                                track.Number =  ReadContentAsInt();
+                                track.Number = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "type":
-                                track.Type = ReadContentAsString();
+                                track.Type =await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "trkseg":
-                                track.Segments.Add( ReadGpxTrackSegment());
+                                track.Segments.Add(await ReadGpxTrackSegmentAsync().ConfigureAwait(false));
                                 break;
                             case "extensions":
-                                 ReadTrackExtensions(track);
+                                await ReadTrackExtensionsAsync(track).ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -386,7 +376,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxTrackSegment ReadGpxTrackSegment()
+        private async Task<GpxTrackSegment> ReadGpxTrackSegmentAsync()
         {
             GpxTrackSegment segment = new GpxTrackSegment();
             if (reader.IsEmptyElement)
@@ -394,7 +384,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -403,13 +393,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "trkpt":
-                                segment.Add( ReadGpxTrackPoint());
+                                segment.Add(await ReadGpxTrackPointAsync().ConfigureAwait(false));
                                 break;
                             case "extensions":
-                                 ReadTrackSegmentExtensions();
+                                await ReadTrackSegmentExtensionsAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -425,7 +415,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxTrackPoint ReadGpxTrackPoint()
+        private async Task<GpxTrackPoint> ReadGpxTrackPointAsync()
         {
             string elementName = reader.Name;
             bool isEmptyElement = reader.IsEmptyElement;
@@ -434,7 +424,7 @@ namespace Gpx.Implementation
             GetPointLocation(trackPoint);
             if (isEmptyElement) return trackPoint;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -443,11 +433,11 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "extensions":
-                                 ReadTrackPointExtensions(trackPoint);
+                                await ReadTrackPointExtensionsAsync(trackPoint).ConfigureAwait(false);
                                 break;
                             default:
-                                if (! ProcessPointField(trackPoint))
-                                     SkipElement();
+                                if (!await ProcessPointFieldAsync(trackPoint).ConfigureAwait(false))
+                                    await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -463,7 +453,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxPerson ReadGpxPerson()
+        private async Task<GpxPerson> ReadGpxPersonAsync()
         {
             GpxPerson person = new GpxPerson();
             if (reader.IsEmptyElement)
@@ -471,7 +461,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -480,16 +470,16 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "name":
-                                person.Name =  ReadContentAsString();
+                                person.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "email":
-                                person.Email =  ReadGpxEmail();
+                                person.Email = await ReadGpxEmailAsync().ConfigureAwait(false);
                                 break;
                             case "link":
-                                person.Link =  ReadGpxLink();
+                                person.Link = await ReadGpxLinkAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -505,7 +495,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxEmail ReadGpxEmail()
+        private async Task<GpxEmail> ReadGpxEmailAsync()
         {
             GpxEmail email = new GpxEmail();
             if (reader.IsEmptyElement)
@@ -513,7 +503,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -522,13 +512,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "id":
-                                email.Id =  ReadContentAsString();
+                                email.Id = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "domain":
-                                email.Domain =  ReadContentAsString();
+                                email.Domain = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -544,7 +534,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxLink ReadGpxLink()
+        private async Task<GpxLink> ReadGpxLinkAsync()
         {
             GpxLink link = new GpxLink();
 
@@ -564,7 +554,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return link;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -573,13 +563,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "text":
-                                link.Text =  ReadContentAsString();
+                                link.Text = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "type":
-                                link.MimeType =  ReadContentAsString();
+                                link.MimeType = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -595,7 +585,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxCopyright ReadGpxCopyright()
+        private async Task<GpxCopyright> ReadGpxCopyrightAsync()
         {
             GpxCopyright copyright = new GpxCopyright();
 
@@ -615,7 +605,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return copyright;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -624,13 +614,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "year":
-                                copyright.Year =  ReadContentAsInt();
+                                copyright.Year = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "license":
-                                copyright.Licence =  ReadContentAsString();
+                                copyright.Licence = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -675,14 +665,14 @@ namespace Gpx.Implementation
             return bounds;
         }
 
-        private void ReadWayPointExtensions(GpxWayPoint wayPoint)
+        private async Task ReadWayPointExtensionsAsync(GpxWayPoint wayPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -694,10 +684,10 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "WaypointExtension":
-                                     ReadGarminWayPointExtensions(wayPoint);
+                                    await ReadGarminWayPointExtensionsAsync(wayPoint).ConfigureAwait(false);
                                     break;
                                 default:
-                                     SkipElement();
+                                    await SkipElementAsync().ConfigureAwait(false);
                                     break;
                             }
 
@@ -709,20 +699,20 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "level":
-                                    wayPoint.Level =  ReadContentAsInt();
+                                    wayPoint.Level = await ReadContentAsIntAsync().ConfigureAwait(false);
                                     break;
                                 case "aliases":
-                                     ReadWayPointAliases(wayPoint);
+                                    await ReadWayPointAliasesAsync(wayPoint).ConfigureAwait(false);
                                     break;
                                 default:
-                                     SkipElement();
+                                    await SkipElementAsync().ConfigureAwait(false);
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        await SkipElementAsync().ConfigureAwait(false);
                         break;
 
                     case XmlNodeType.EndElement:
@@ -735,14 +725,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadRouteExtensions(GpxRoute route)
+        private async Task ReadRouteExtensionsAsync(GpxRoute route)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -753,17 +743,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "RouteExtension":
-                                     ReadGarminTrackOrRouteExtensions(route);
+                                    await ReadGarminTrackOrRouteExtensionsAsync(route).ConfigureAwait(false);
                                     break;
                                 default:
-                                     SkipElement();
+                                    await SkipElementAsync().ConfigureAwait(false);
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        await SkipElementAsync().ConfigureAwait(false);
                         break;
 
                     case XmlNodeType.EndElement:
@@ -776,14 +766,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadRoutePointExtensions(GpxRoutePoint routePoint)
+        private async Task ReadRoutePointExtensionsAsync(GpxRoutePoint routePoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -794,17 +784,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "RoutePointExtension":
-                                     ReadGarminRoutePointExtensions(routePoint);
+                                    await ReadGarminRoutePointExtensionsAsync(routePoint).ConfigureAwait(false);
                                     break;
                                 default:
-                                     SkipElement();
+                                    await SkipElementAsync().ConfigureAwait(false);
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        await SkipElementAsync().ConfigureAwait(false);
                         break;
 
                     case XmlNodeType.EndElement:
@@ -817,13 +807,13 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadTrackExtensions(GpxTrack track)
+        private async Task ReadTrackExtensionsAsync(GpxTrack track)
         {
             if (reader.IsEmptyElement) return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -834,17 +824,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "TrackExtension":
-                                     ReadGarminTrackOrRouteExtensions(track);
+                                    await ReadGarminTrackOrRouteExtensionsAsync(track).ConfigureAwait(false);
                                     break;
                                 default:
-                                     SkipElement();
+                                    await SkipElementAsync().ConfigureAwait(false);
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        await SkipElementAsync().ConfigureAwait(false);
                         break;
 
                     case XmlNodeType.EndElement:
@@ -857,19 +847,19 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadTrackSegmentExtensions()
+        private Task ReadTrackSegmentExtensionsAsync()
         {
-             SkipElement();
+            return SkipElementAsync();
         }
 
-        private void ReadTrackPointExtensions(GpxTrackPoint trackPoint)
+        private async Task ReadTrackPointExtensionsAsync(GpxTrackPoint trackPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -882,17 +872,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "TrackPointExtension":
-                                     ReadGarminTrackPointExtensions(trackPoint);
+                                    await ReadGarminTrackPointExtensionsAsync(trackPoint).ConfigureAwait(false);
                                     break;
                                 default:
-                                     SkipElement();
+                                    await SkipElementAsync().ConfigureAwait(false);
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        await SkipElementAsync().ConfigureAwait(false);
                         break;
 
                     case XmlNodeType.EndElement:
@@ -904,14 +894,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadGarminWayPointExtensions(GpxWayPoint wayPoint)
+        private async Task ReadGarminWayPointExtensionsAsync(GpxWayPoint wayPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -919,34 +909,34 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "Proximity":
-                                wayPoint.Proximity =  ReadContentAsDouble();
+                                wayPoint.Proximity = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "Temperature":
-                                wayPoint.Temperature =  ReadContentAsDouble();
+                                wayPoint.Temperature = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "Depth":
-                                wayPoint.Depth =  ReadContentAsDouble();
+                                wayPoint.Depth = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "DisplayMode":
-                                wayPoint.DisplayMode =  ReadContentAsString();
+                                wayPoint.DisplayMode = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "Categories":
-                                 ReadGarminCategories(wayPoint);
+                                await ReadGarminCategoriesAsync(wayPoint).ConfigureAwait(false);
                                 break;
                             case "Address":
-                                wayPoint.Address =  ReadGarminGpxAddress();
+                                wayPoint.Address = await ReadGarminGpxAddressAsync().ConfigureAwait(false);
                                 break;
                             case "PhoneNumber":
-                                wayPoint.Phones.Add( ReadGarminGpxPhone());
+                                wayPoint.Phones.Add(await ReadGarminGpxPhoneAsync().ConfigureAwait(false));
                                 break;
                             case "Samples":
-                                wayPoint.Samples =  ReadContentAsInt();
+                                wayPoint.Samples = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "Expiration":
-                                wayPoint.Expiration =  ReadContentAsDateTime();
+                                wayPoint.Expiration = await ReadContentAsDateTimeAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -961,14 +951,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadGarminTrackOrRouteExtensions(GpxTrackOrRoute trackOrRoute)
+        private async Task ReadGarminTrackOrRouteExtensionsAsync(GpxTrackOrRoute trackOrRoute)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -977,10 +967,10 @@ namespace Gpx.Implementation
                         {
                             case "DisplayColor":
                                 trackOrRoute.DisplayColor = (GpxColor)Enum.Parse(typeof(GpxColor),
-                                     ReadContentAsString(), false);
+                                    await ReadContentAsStringAsync().ConfigureAwait(false), false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -996,14 +986,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadGarminRoutePointExtensions(GpxRoutePoint routePoint)
+        private async Task ReadGarminRoutePointExtensionsAsync(GpxRoutePoint routePoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -1011,10 +1001,10 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "rpt":
-                                routePoint.RoutePoints.Add( ReadGarminAutoRoutePoint());
+                                routePoint.RoutePoints.Add(await ReadGarminAutoRoutePointAsync().ConfigureAwait(false));
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -1030,14 +1020,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadGarminTrackPointExtensions(GpxTrackPoint trackPoint)
+        private async Task ReadGarminTrackPointExtensionsAsync(GpxTrackPoint trackPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -1046,32 +1036,32 @@ namespace Gpx.Implementation
                         {
                             case "Temperature":
                             case "atemp":
-                                trackPoint.Temperature =  ReadContentAsDouble();
+                                trackPoint.Temperature = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "wtemp":
-                                trackPoint.WaterTemperature =  ReadContentAsDouble();
+                                trackPoint.WaterTemperature = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "Depth":
                             case "depth":
-                                trackPoint.Depth =  ReadContentAsDouble();
+                                trackPoint.Depth = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "hr":
-                                trackPoint.HeartRate =  ReadContentAsInt();
+                                trackPoint.HeartRate = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "cad":
-                                trackPoint.Cadence =  ReadContentAsInt();
+                                trackPoint.Cadence = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "speed":
-                                trackPoint.Speed =  ReadContentAsDouble();
+                                trackPoint.Speed = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "course":
-                                trackPoint.Course =  ReadContentAsDouble();
+                                trackPoint.Course = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "bearing":
-                                trackPoint.Bearing =  ReadContentAsDouble();
+                                trackPoint.Bearing = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -1087,14 +1077,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadGarminCategories(GpxWayPoint wayPoint)
+        private async Task ReadGarminCategoriesAsync(GpxWayPoint wayPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -1102,10 +1092,10 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "Category":
-                                wayPoint.Categories.Add( ReadContentAsString());
+                                wayPoint.Categories.Add(await ReadContentAsStringAsync().ConfigureAwait(false));
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -1121,14 +1111,14 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private void ReadWayPointAliases(GpxWayPoint wayPoint)
+        private async Task ReadWayPointAliasesAsync(GpxWayPoint wayPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -1136,10 +1126,10 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "alias":
-                                wayPoint.Aliases.Add( ReadContentAsString());
+                                wayPoint.Aliases.Add(await ReadContentAsStringAsync().ConfigureAwait(false));
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -1154,7 +1144,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxPoint ReadGarminAutoRoutePoint()
+        private async Task<GpxPoint> ReadGarminAutoRoutePointAsync()
         {
             GpxPoint point = new GpxPoint();
 
@@ -1165,12 +1155,12 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return point;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                         SkipElement();
+                        await SkipElementAsync().ConfigureAwait(false);
                         break;
 
                     case XmlNodeType.EndElement:
@@ -1183,7 +1173,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxAddress ReadGarminGpxAddress()
+        private async Task<GpxAddress> ReadGarminGpxAddressAsync()
         {
             GpxAddress address = new GpxAddress();
             if (reader.IsEmptyElement)
@@ -1191,7 +1181,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -1202,27 +1192,27 @@ namespace Gpx.Implementation
 
                                 if (string.IsNullOrEmpty(address.StreetAddress))
                                 {
-                                    address.StreetAddress =  ReadContentAsString();
+                                    address.StreetAddress = await ReadContentAsStringAsync().ConfigureAwait(false);
                                     break;
                                 }
 
-                                address.StreetAddress += " " +  ReadContentAsString();
+                                address.StreetAddress += " " + await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
 
                             case "City":
-                                address.City =  ReadContentAsString();
+                                address.City = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "State":
-                                address.State =  ReadContentAsString();
+                                address.State = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "Country":
-                                address.Country =  ReadContentAsString();
+                                address.Country = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "PostalCode":
-                                address.PostalCode =  ReadContentAsString();
+                                address.PostalCode = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             default:
-                                 SkipElement();
+                                await SkipElementAsync().ConfigureAwait(false);
                                 break;
                         }
 
@@ -1238,16 +1228,16 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private GpxPhone ReadGarminGpxPhone()
+        private async Task<GpxPhone> ReadGarminGpxPhoneAsync()
         {
             return new GpxPhone
             {
                 Category = reader.GetAttribute("Category", GpxNamespaces.GARMIN_EXTENSIONS_NAMESPACE),
-                Number =  ReadContentAsString()
+                Number = await ReadContentAsStringAsync().ConfigureAwait(false)
             };
         }
 
-        private void SkipElement()
+        private async Task SkipElementAsync()
         {
             if (reader.IsEmptyElement)
                 return;
@@ -1255,7 +1245,7 @@ namespace Gpx.Implementation
             string elementName = reader.Name;
             int depth = reader.Depth;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 if (reader.NodeType == XmlNodeType.EndElement)
                 {
@@ -1283,70 +1273,70 @@ namespace Gpx.Implementation
             }
         }
 
-        private bool ProcessPointField(GpxPoint point)
+        private async Task<bool> ProcessPointFieldAsync(GpxPoint point)
         {
             switch (reader.Name)
             {
                 case "ele":
-                    point.Elevation =  ReadContentAsDouble();
+                    point.Elevation = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "time":
-                    point.Time =  ReadContentAsDateTime();
+                    point.Time = await ReadContentAsDateTimeAsync().ConfigureAwait(false);
                     return true;
                 case "magvar":
-                    point.MagneticVar =  ReadContentAsDouble();
+                    point.MagneticVar = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "geoidheight":
-                    point.GeoidHeight =  ReadContentAsDouble();
+                    point.GeoidHeight = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "name":
-                    point.Name =  ReadContentAsString();
+                    point.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "cmt":
-                    point.Comment =  ReadContentAsString();
+                    point.Comment = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "desc":
-                    point.Description =  ReadContentAsString();
+                    point.Description = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "src":
-                    point.Source =  ReadContentAsString();
+                    point.Source = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "link":
-                    point.Links.Add( ReadGpxLink());
+                    point.Links.Add(await ReadGpxLinkAsync().ConfigureAwait(false));
                     return true;
                 case "sym":
-                    point.Symbol =  ReadContentAsString();
+                    point.Symbol = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "type":
-                    point.Type =  ReadContentAsString();
+                    point.Type = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "fix":
-                    point.FixType =  ReadContentAsString();
+                    point.FixType = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "sat":
-                    point.Satelites =  ReadContentAsInt();
+                    point.Satelites = await ReadContentAsIntAsync().ConfigureAwait(false);
                     return true;
                 case "hdop":
-                    point.Hdop =  ReadContentAsDouble();
+                    point.Hdop = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "vdop":
-                    point.Vdop =  ReadContentAsDouble();
+                    point.Vdop = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "pdop":
-                    point.Pdop =  ReadContentAsDouble();
+                    point.Pdop = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "ageofdgpsdata":
-                    point.AgeOfData =  ReadContentAsDouble();
+                    point.AgeOfData = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
                 case "dgpsid":
-                    point.DgpsId =  ReadContentAsInt();
+                    point.DgpsId = await ReadContentAsIntAsync().ConfigureAwait(false);
                     return true;
             }
 
             return false;
         }
 
-        private string ReadContentAsString()
+        private async Task<string> ReadContentAsStringAsync()
         {
             if (reader.IsEmptyElement)
                 throw new FormatException(reader.Name);
@@ -1354,7 +1344,7 @@ namespace Gpx.Implementation
             string elementName = reader.Name;
             string result = string.Empty;
 
-            while ( reader.Read())
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 switch (reader.NodeType)
                 {
@@ -1373,21 +1363,21 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private int ReadContentAsInt()
+        private async Task<int> ReadContentAsIntAsync()
         {
-            string value =  ReadContentAsString();
+            string value = await ReadContentAsStringAsync().ConfigureAwait(false);
             return int.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        private double ReadContentAsDouble()
+        private async Task<double> ReadContentAsDoubleAsync()
         {
-            string value =  ReadContentAsString();
+            string value = await ReadContentAsStringAsync().ConfigureAwait(false);
             return double.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        private DateTime ReadContentAsDateTime()
+        private async Task<DateTime> ReadContentAsDateTimeAsync()
         {
-            string value =  ReadContentAsString();
+            string value = await ReadContentAsStringAsync().ConfigureAwait(false);
             return DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
         }
     }

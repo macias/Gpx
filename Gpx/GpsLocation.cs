@@ -1,12 +1,4 @@
-﻿// ==========================================================================
-// Copyright (c) 2011-2016, dlg.krakow.pl
-// All Rights Reserved
-//
-// NOTICE: dlg.krakow.pl permits you to use, modify, and distribute this file
-// in accordance with the terms of the license agreement accompanying it.
-// ==========================================================================
-
-using System;
+﻿using System;
 using System.Globalization;
 using System.Text;
 
@@ -157,7 +149,8 @@ namespace Gpx
 
         public override bool Equals(object obj)
         {
-            if (!(obj is GpsLocation)) return false;
+            if (!(obj is GpsLocation))
+                return false;
 
             GpsLocation other = (GpsLocation)obj;
             return this.Latitude == other.Latitude && this.Longitude == other.Longitude;

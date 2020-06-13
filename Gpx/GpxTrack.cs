@@ -1,11 +1,4 @@
-﻿// ==========================================================================
-// Copyright (c) 2011-2016, dlg.krakow.pl
-// All Rights Reserved
-//
-// NOTICE: dlg.krakow.pl permits you to use, modify, and distribute this file
-// in accordance with the terms of the license agreement accompanying it.
-// ==========================================================================
-
+﻿using Gpx.Implementation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +7,7 @@ namespace Gpx
 {
     public sealed class GpxTrack : GpxTrackOrRoute
     {
-        private readonly List<GpxTrackSegment> segments = new List<GpxTrackSegment>(1);
+        private readonly List<GpxTrackSegment> segments = new List<GpxTrackSegment>(capacity: 1);
 
         public IList<GpxTrackSegment> Segments
         {
@@ -40,7 +33,7 @@ namespace Gpx
 
         public override string ToString()
         {
-            return String.Join(" ",Segments.Select(it => "["+it.ToString()+"]"));
+            return String.Join(" ", Segments.Select(it => "[" + it.ToString() + "]"));
         }
     }
 }
