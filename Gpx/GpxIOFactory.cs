@@ -46,5 +46,11 @@ namespace Gpx
             writer = result;
             return result;
         }
+        public static IDisposable CreateWriter(string path, out IGpxWriter writer)
+        {
+            var stream = new FileStream(path, FileMode.CreateNew);
+            var result = CreateWriter(stream, out writer);
+            return new Disposable(result,stream);
+        }
     }
 }

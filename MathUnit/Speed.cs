@@ -15,7 +15,7 @@ namespace MathUnit
         public bool IsPositiveInfinity => double.IsPositiveInfinity(this.metersPerSecond);
         public double MetersPerSecond => this.metersPerSecond;
         public double KilometersPerSecond => this.metersPerSecond / 1_000;
-        public double KilometersPerHour => this.metersPerSecond *3_600 / 1_000;
+        public double KilometersPerHour => this.metersPerSecond * 3_600 / 1_000;
 
         private Speed(double metersPerSecond)
         {
@@ -50,6 +50,10 @@ namespace MathUnit
         public static double operator /(Speed a, Speed b)
         {
             return a.metersPerSecond / b.metersPerSecond;
+        }
+        public static Length operator *(Speed speed, TimeSpan time)
+        {
+            return Length.FromMeters(speed.metersPerSecond * time.TotalSeconds);
         }
         public static Speed operator +(Speed val1, Speed val2)
         {
