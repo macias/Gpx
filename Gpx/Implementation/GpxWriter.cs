@@ -64,10 +64,14 @@ namespace Gpx.Implementation
                 {
                     Writer_.WriteStartElement("WaypointExtension", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE);
 
-                    if (wayPoint.Proximity != null) Writer_.WriteElementString("Proximity", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Proximity.Value.ToString());
-                    if (wayPoint.Temperature != null) Writer_.WriteElementString("Temperature", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Temperature.Value.ToString());
-                    if (wayPoint.Depth != null) Writer_.WriteElementString("Depth", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Depth.Value.ToString());
-                    if (wayPoint.DisplayMode != null) Writer_.WriteElementString("DisplayMode", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.DisplayMode);
+                    if (wayPoint.Proximity != null)
+                        Writer_.WriteElementString("Proximity", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Proximity.Value.ToString());
+                    if (wayPoint.Temperature != null)
+                        Writer_.WriteElementString("Temperature", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Temperature.Value.ToString());
+                    if (wayPoint.Depth != null)
+                        Writer_.WriteElementString("Depth", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Depth.Value.ToString());
+                    if (wayPoint.DisplayMode != null)
+                        Writer_.WriteElementString("DisplayMode", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.DisplayMode);
 
                     if (wayPoint.Categories.Count != 0)
                     {
@@ -234,14 +238,22 @@ namespace Gpx.Implementation
         {
             Writer_.WriteAttributeString("lat", point.Latitude.ToString(CultureInfo.InvariantCulture));
             Writer_.WriteAttributeString("lon", point.Longitude.ToString(CultureInfo.InvariantCulture));
-            if (point.Elevation != null) Writer_.WriteElementString("ele", point.Elevation.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.Time != null) Writer_.WriteElementString("time", ToGpxDateString(point.Time.Value));
-            if (point.MagneticVar != null) Writer_.WriteElementString("magvar", point.MagneticVar.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.GeoidHeight != null) Writer_.WriteElementString("geoidheight", point.GeoidHeight.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.Name != null) Writer_.WriteElementString("name", point.Name);
-            if (point.Comment != null) Writer_.WriteElementString("cmt", point.Comment);
-            if (point.Description != null) Writer_.WriteElementString("desc", point.Description);
-            if (point.Source != null) Writer_.WriteElementString("src", point.Source);
+            if (point.Elevation != null)
+                Writer_.WriteElementString("ele", point.Elevation.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.Time != null)
+                Writer_.WriteElementString("time", ToGpxDateString(point.Time.Value));
+            if (point.MagneticVar != null)
+                Writer_.WriteElementString("magvar", point.MagneticVar.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.GeoidHeight != null)
+                Writer_.WriteElementString("geoidheight", point.GeoidHeight.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.Name != null)
+                Writer_.WriteElementString("name", point.Name);
+            if (point.Comment != null)
+                Writer_.WriteElementString("cmt", point.Comment);
+            if (point.Description != null)
+                Writer_.WriteElementString("desc", point.Description);
+            if (point.Source != null)
+                Writer_.WriteElementString("src", point.Source);
 
             foreach (GpxLink link in point.Links)
             {
