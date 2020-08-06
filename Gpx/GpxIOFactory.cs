@@ -28,16 +28,17 @@ namespace Gpx
             reader = result;
             return result;
         }
-        public static IDisposable CreateReader(MemoryStream stream, out IGpxReader reader)
+        public static IDisposable CreateReader(MemoryStream stream, out IGpxReader reader,out IStreamProgress streamProgress)
         {
             var result = new GpxReader(stream);
+            streamProgress = new StreamProgress(stream);
             reader = result;
             return result;
         }
-        public static IDisposable CreateReader(string filepath, out IGpxReader reader)
+        public static IDisposable CreateReader(string filepath, out IGpxReader reader, out IStreamProgress streamProgress)
         {
             var stream = new MemoryStream(System.IO.File.ReadAllBytes(filepath));
-            IDisposable result = CreateReader(stream, out  reader);
+            IDisposable result = CreateReader(stream, out  reader,out streamProgress);
             return new Disposable(result,stream);
         }
         public static IDisposable CreateWriter(Stream stream, out IGpxWriter writer)
