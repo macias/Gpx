@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace MathUnit
 {
@@ -51,9 +52,22 @@ namespace MathUnit
             return Math.Cos(this.radians);
         }
 
+        public Angle Normalize()
+        {
+            return new Angle(Mather.Mod(this.radians, 2 * Math.PI));
+        }
+
+        public static Angle Distance(Angle a, Angle b)
+        {
+            Angle diff = (a - b).Normalize();
+            if (diff <= PI)
+                return diff;
+            else
+                return 2 * PI - diff;
+        }
         public static Angle operator -(Angle a, Angle b)
         {
-            return new Angle(a.radians - b.radians);
+            return new Angle( a.radians - b.radians);
         }
         public static Angle operator -(Angle a)
         {

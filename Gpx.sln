@@ -1,11 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gpx", "Gpx\Gpx.csproj", "{A4FDCB46-5802-4C54-8E65-F3ADAD273B86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathUnit", "MathUnit\MathUnit.csproj", "{3DA1F4D2-9B0E-4A4F-A1B5-8B40F214776A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MathUnit", "MathUnit\MathUnit.csproj", "{3DA1F4D2-9B0E-4A4F-A1B5-8B40F214776A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F9E70F31-603B-43FC-B690-EDE7928F4F32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathUnit.Tests", "Tests\MathUnit.Tests\MathUnit.Tests.csproj", "{F9295DA6-1AAE-4BB0-855C-1FA8F25D53EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +25,16 @@ Global
 		{3DA1F4D2-9B0E-4A4F-A1B5-8B40F214776A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DA1F4D2-9B0E-4A4F-A1B5-8B40F214776A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3DA1F4D2-9B0E-4A4F-A1B5-8B40F214776A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9295DA6-1AAE-4BB0-855C-1FA8F25D53EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9295DA6-1AAE-4BB0-855C-1FA8F25D53EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9295DA6-1AAE-4BB0-855C-1FA8F25D53EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9295DA6-1AAE-4BB0-855C-1FA8F25D53EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F9295DA6-1AAE-4BB0-855C-1FA8F25D53EA} = {F9E70F31-603B-43FC-B690-EDE7928F4F32}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DC17BB12-A626-4413-BB93-F6C9D6B57FC1}
