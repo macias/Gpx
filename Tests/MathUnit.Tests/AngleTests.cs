@@ -7,7 +7,7 @@ namespace MathUnit.Tests
     {
         private const int precision = 10;
 
-        [Fact]
+        /*[Fact]
         public void DistanceAroundZeroTest()
         {
             Angle a = Angle.FromDegrees(1);
@@ -18,6 +18,18 @@ namespace MathUnit.Tests
 
             Assert.Equal(2, a_b.Degrees, precision);
             Assert.Equal(2, b_a.Degrees, precision);
+        }*/
+
+        [Fact]
+        public void SignTest()
+        {
+            Angle a = Angle.FromDegrees(10);
+            Angle b = Angle.FromDegrees(-10);
+            Angle c = Angle.FromDegrees(0);
+
+            Assert.Equal(1, a.Sign());
+            Assert.Equal(-1, b.Sign());
+            Assert.Equal(0, c.Sign());
         }
 
         [Fact]

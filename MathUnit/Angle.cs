@@ -8,6 +8,7 @@ namespace MathUnit
     {
         public static Angle Zero { get; } = new Angle(0);
         public static Angle PI { get; } = Angle.FromRadians(Math.PI);
+        public static Angle FullCircle { get; } = Angle.FromRadians(2 * Math.PI);
 
         public static Angle FromDegrees(double degrees)
         {
@@ -43,6 +44,11 @@ namespace MathUnit
             this.radians = radians;
         }
 
+        public int Sign()
+        {
+            return Math.Sign(this.radians);
+        }
+
         public double Sin()
         {
             return Math.Sin(this.radians);
@@ -57,17 +63,17 @@ namespace MathUnit
             return new Angle(Mather.Mod(this.radians, 2 * Math.PI));
         }
 
-        public static Angle Distance(Angle a, Angle b)
+        /*public static Angle Distance(Angle a, Angle b)
         {
             Angle diff = (a - b).Normalize();
             if (diff <= PI)
                 return diff;
             else
                 return 2 * PI - diff;
-        }
+        }*/
         public static Angle operator -(Angle a, Angle b)
         {
-            return new Angle( a.radians - b.radians);
+            return new Angle(a.radians - b.radians);
         }
         public static Angle operator -(Angle a)
         {
