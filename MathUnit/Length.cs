@@ -14,6 +14,7 @@ namespace MathUnit
         public bool IsZero => this.meters == 0;
         public bool IsPositiveInfinity => double.IsPositiveInfinity(this.meters);
         public double Meters => this.meters;
+        public double Centimeters => this.meters * 100;
         public double Millimeters => this.meters * 1000.0;
         public double Kilometers => this.meters / 1000.0;
 
@@ -30,9 +31,13 @@ namespace MathUnit
         {
             return new Length(kilometers * 1000.0);
         }
-        public static Length FromMillimeter(double millimeter)
+        public static Length FromMillimeters(double millimeters)
         {
-            return new Length(millimeter / 1000.0);
+            return new Length(millimeters / 1000.0);
+        }
+        public static Length FromCentimeters(double centimeters)
+        {
+            return new Length(centimeters / 100.0);
         }
 
         public static Length operator *(Length length, double scalar)
