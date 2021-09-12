@@ -8,10 +8,11 @@ using System.Xml;
 namespace Gpx.Implementation
 {
     // this reader is around x6 faster than async version, not Task flying around, GC can rest
-    internal sealed class GpxReader : IGpxReader,IDisposable
+    internal sealed class GpxReader<TTrackPoint> : IGpxReader, IDisposable
+                where TTrackPoint : GpxTrackPoint, new()
     {
         private readonly XmlReader reader;
-
+        private readonly IGpxTrackPointReader<TTrackPoint> trackPointReader;
         private GpxObjectType objectType;
         public GpxAttributes Attributes { get; private set; }
         public GpxMetadata Metadata { get; private set; }
@@ -19,9 +20,10 @@ namespace Gpx.Implementation
         public GpxRoute Route { get; private set; }
         public GpxTrack Track { get; private set; }
 
-        public GpxReader(MemoryStream stream)
+        public GpxReader(MemoryStream stream, IGpxTrackPointReader<TTrackPoint> trackPointReader)
         {
             reader = XmlReader.Create(stream, new XmlReaderSettings() { Async = false });
+            this.trackPointReader = trackPointReader;
         }
 
         public void Dispose()
@@ -36,7 +38,7 @@ namespace Gpx.Implementation
             return result;
         }
 
-        private  bool doRead()
+        private bool doRead()
         {
             if (this.Attributes == null)
             {
@@ -58,23 +60,23 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "metadata":
-                                Metadata =  ReadGpxMetadata();
+                                Metadata = ReadGpxMetadata();
                                 objectType = GpxObjectType.Metadata;
                                 return true;
-                            case "wpt":
-                                WayPoint =  ReadGpxWayPoint();
+                            case GpxSymbol.Waypoint:
+                                WayPoint = ReadGpxWayPoint();
                                 objectType = GpxObjectType.WayPoint;
                                 return true;
                             case "rte":
-                                Route =  ReadGpxRoute();
+                                Route = ReadGpxRoute();
                                 objectType = GpxObjectType.Route;
                                 return true;
-                            case "trk":
-                                Track =  ReadGpxTrack();
+                            case GpxSymbol.Track:
+                                Track = ReadGpxTrack();
                                 objectType = GpxObjectType.Track;
                                 return true;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -147,32 +149,32 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
-                                metadata.Name = ReadContentAsString();
+                            case GpxSymbol.Name:
+                                metadata.Name = reader.ReadElementContentAsString();
                                 break;
                             case "desc":
-                                metadata.Description = ReadContentAsString();
+                                metadata.Description = reader.ReadElementContentAsString();
                                 break;
                             case "author":
                                 metadata.Author = ReadGpxPerson();
                                 break;
                             case "copyright":
-                                metadata.Copyright =ReadGpxCopyright();
+                                metadata.Copyright = ReadGpxCopyright();
                                 break;
                             case "link":
-                                metadata.Link =  ReadGpxLink();
+                                metadata.Link = ReadGpxLink();
                                 break;
-                            case "time":
-                                metadata.Time = ReadContentAsDateTime();
+                            case GpxSymbol.Time:
+                                metadata.Time = reader.ReadElementContentAsDateTime();
                                 break;
                             case "keywords":
-                                metadata.Keywords =  ReadContentAsString();
+                                metadata.Keywords = reader.ReadElementContentAsString();
                                 break;
                             case "bounds":
                                 ReadGpxBounds();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -188,7 +190,7 @@ namespace Gpx.Implementation
             throw new FormatException(elementName);
         }
 
-        private  GpxWayPoint ReadGpxWayPoint()
+        private GpxWayPoint ReadGpxWayPoint()
         {
             string elementName = reader.Name;
             bool isEmptyElement = reader.IsEmptyElement;
@@ -198,7 +200,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return wayPoint;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -207,11 +209,11 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "extensions":
-                                 ReadWayPointExtensions(wayPoint);
+                                ReadWayPointExtensions(wayPoint);
                                 break;
                             default:
-                                if (! ProcessPointField(wayPoint))
-                                     SkipElement();
+                                if (!ProcessPointField(wayPoint))
+                                    reader.SkipElement();
                                 break;
                         }
 
@@ -235,7 +237,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -243,35 +245,35 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
-                                route.Name =  ReadContentAsString();
+                            case GpxSymbol.Name:
+                                route.Name = reader.ReadElementContentAsString();
                                 break;
-                            case "cmt":
-                                route.Comment =  ReadContentAsString();
+                            case GpxSymbol.Comment:
+                                route.Comment = reader.ReadElementContentAsString();
                                 break;
                             case "desc":
-                                route.Description =  ReadContentAsString();
+                                route.Description = reader.ReadElementContentAsString();
                                 break;
                             case "src":
-                                route.Source =  ReadContentAsString();
+                                route.Source = reader.ReadElementContentAsString();
                                 break;
                             case "link":
-                                route.Links.Add( ReadGpxLink());
+                                route.Links.Add(ReadGpxLink());
                                 break;
                             case "number":
-                                route.Number =  ReadContentAsInt();
+                                route.Number = reader.ReadElementContentAsInt();
                                 break;
                             case "type":
-                                route.Type =  ReadContentAsString();
+                                route.Type = reader.ReadElementContentAsString();
                                 break;
                             case "rtept":
-                                route.Add( ReadGpxRoutePoint());
+                                route.Add(ReadGpxRoutePoint());
                                 break;
                             case "extensions":
-                                 ReadRouteExtensions(route);
+                                ReadRouteExtensions(route);
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -297,7 +299,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return routePoint;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -306,11 +308,11 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "extensions":
-                                 ReadRoutePointExtensions(routePoint);
+                                ReadRoutePointExtensions(routePoint);
                                 break;
                             default:
-                                if (! ProcessPointField(routePoint))
-                                     SkipElement();
+                                if (!ProcessPointField(routePoint))
+                                    reader.SkipElement();
                                 break;
                         }
 
@@ -334,7 +336,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -342,35 +344,35 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
-                                track.Name =  ReadContentAsString();
+                            case GpxSymbol.Name:
+                                track.Name = reader.ReadElementContentAsString();
                                 break;
-                            case "cmt":
-                                track.Comment =  ReadContentAsString();
+                            case GpxSymbol.Comment:
+                                track.Comment = reader.ReadElementContentAsString();
                                 break;
                             case "desc":
-                                track.Description =  ReadContentAsString();
+                                track.Description = reader.ReadElementContentAsString();
                                 break;
                             case "src":
-                                track.Source =  ReadContentAsString();
+                                track.Source = reader.ReadElementContentAsString();
                                 break;
                             case "link":
-                                track.Links.Add( ReadGpxLink());
+                                track.Links.Add(ReadGpxLink());
                                 break;
                             case "number":
-                                track.Number =  ReadContentAsInt();
+                                track.Number = reader.ReadElementContentAsInt();
                                 break;
                             case "type":
-                                track.Type = ReadContentAsString();
+                                track.Type = reader.ReadElementContentAsString();
                                 break;
-                            case "trkseg":
-                                track.Segments.Add( ReadGpxTrackSegment());
+                            case GpxSymbol.TrackSegment:
+                                track.Segments.Add(ReadGpxTrackSegment());
                                 break;
                             case "extensions":
-                                 ReadTrackExtensions(track);
+                                ReadTrackExtensions(track);
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -394,7 +396,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -402,14 +404,14 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "trkpt":
-                                segment.Add( ReadGpxTrackPoint());
+                            case GpxSymbol.TrackPoint:
+                                segment.Add(ReadGpxTrackPoint());
                                 break;
                             case "extensions":
-                                 ReadTrackSegmentExtensions();
+                                ReadTrackSegmentExtensions();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -430,11 +432,12 @@ namespace Gpx.Implementation
             string elementName = reader.Name;
             bool isEmptyElement = reader.IsEmptyElement;
 
-            GpxTrackPoint trackPoint = new GpxTrackPoint();
+            var trackPoint = new TTrackPoint();
             GetPointLocation(trackPoint);
-            if (isEmptyElement) return trackPoint;
+            if (isEmptyElement)
+                return trackPoint;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -443,11 +446,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "extensions":
-                                 ReadTrackPointExtensions(trackPoint);
+                                ReadTrackPointExtensions(trackPoint);
                                 break;
                             default:
-                                if (! ProcessPointField(trackPoint))
-                                     SkipElement();
+                                if (!ProcessPointField(trackPoint)
+                                    &&
+                                    !trackPointReader.TryReadBody(reader, trackPoint))
+                                    reader.SkipElement();
                                 break;
                         }
 
@@ -471,7 +476,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -479,17 +484,17 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
-                                person.Name =  ReadContentAsString();
+                            case GpxSymbol.Name:
+                                person.Name = reader.ReadElementContentAsString();
                                 break;
                             case "email":
-                                person.Email =  ReadGpxEmail();
+                                person.Email = ReadGpxEmail();
                                 break;
                             case "link":
-                                person.Link =  ReadGpxLink();
+                                person.Link = ReadGpxLink();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -513,7 +518,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -522,13 +527,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "id":
-                                email.Id =  ReadContentAsString();
+                                email.Id = reader.ReadElementContentAsString();
                                 break;
                             case "domain":
-                                email.Domain =  ReadContentAsString();
+                                email.Domain = reader.ReadElementContentAsString();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -564,7 +569,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return link;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -573,13 +578,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "text":
-                                link.Text =  ReadContentAsString();
+                                link.Text = reader.ReadElementContentAsString();
                                 break;
                             case "type":
-                                link.MimeType =  ReadContentAsString();
+                                link.MimeType = reader.ReadElementContentAsString();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -615,7 +620,7 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return copyright;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -624,13 +629,13 @@ namespace Gpx.Implementation
                         switch (reader.Name)
                         {
                             case "year":
-                                copyright.Year =  ReadContentAsInt();
+                                copyright.Year = reader.ReadElementContentAsInt();
                                 break;
                             case "license":
-                                copyright.Licence =  ReadContentAsString();
+                                copyright.Licence = reader.ReadElementContentAsString();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -682,7 +687,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -694,10 +699,10 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "WaypointExtension":
-                                     ReadGarminWayPointExtensions(wayPoint);
+                                    ReadGarminWayPointExtensions(wayPoint);
                                     break;
                                 default:
-                                     SkipElement();
+                                    reader.SkipElement();
                                     break;
                             }
 
@@ -709,20 +714,20 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "level":
-                                    wayPoint.Level =  ReadContentAsInt();
+                                    wayPoint.Level = reader.ReadElementContentAsInt();
                                     break;
                                 case "aliases":
-                                     ReadWayPointAliases(wayPoint);
+                                    ReadWayPointAliases(wayPoint);
                                     break;
                                 default:
-                                     SkipElement();
+                                    reader.SkipElement();
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        reader.SkipElement();
                         break;
 
                     case XmlNodeType.EndElement:
@@ -742,7 +747,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -753,17 +758,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "RouteExtension":
-                                     ReadGarminTrackOrRouteExtensions(route);
+                                    ReadGarminTrackOrRouteExtensions(route);
                                     break;
                                 default:
-                                     SkipElement();
+                                    reader.SkipElement();
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        reader.SkipElement();
                         break;
 
                     case XmlNodeType.EndElement:
@@ -783,7 +788,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -794,17 +799,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "RoutePointExtension":
-                                     ReadGarminRoutePointExtensions(routePoint);
+                                    ReadGarminRoutePointExtensions(routePoint);
                                     break;
                                 default:
-                                     SkipElement();
+                                    reader.SkipElement();
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        reader.SkipElement();
                         break;
 
                     case XmlNodeType.EndElement:
@@ -823,7 +828,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -834,17 +839,17 @@ namespace Gpx.Implementation
                             switch (reader.LocalName)
                             {
                                 case "TrackExtension":
-                                     ReadGarminTrackOrRouteExtensions(track);
+                                    ReadGarminTrackOrRouteExtensions(track);
                                     break;
                                 default:
-                                     SkipElement();
+                                    reader.SkipElement();
                                     break;
                             }
 
                             break;
                         }
 
-                         SkipElement();
+                        reader.SkipElement();
                         break;
 
                     case XmlNodeType.EndElement:
@@ -859,44 +864,41 @@ namespace Gpx.Implementation
 
         private void ReadTrackSegmentExtensions()
         {
-             SkipElement();
+            reader.SkipElement();
         }
 
-        private void ReadTrackPointExtensions(GpxTrackPoint trackPoint)
+        private void ReadTrackPointExtensions(TTrackPoint trackPoint)
         {
             if (reader.IsEmptyElement)
                 return;
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-
-                        if (reader.NamespaceURI == GpxNamespaces.GARMIN_EXTENSIONS_NAMESPACE ||
-                            reader.NamespaceURI == GpxNamespaces.GARMIN_TRACKPOINT_EXTENSIONS_V1_NAMESPACE ||
-                            reader.NamespaceURI == GpxNamespaces.GARMIN_TRACKPOINT_EXTENSIONS_V2_NAMESPACE)
                         {
-                            switch (reader.LocalName)
+
+                            if ((reader.NamespaceURI == GpxNamespaces.GARMIN_EXTENSIONS_NAMESPACE
+                                || reader.NamespaceURI == GpxNamespaces.GARMIN_TRACKPOINT_EXTENSIONS_V1_NAMESPACE
+                                || reader.NamespaceURI == GpxNamespaces.GARMIN_TRACKPOINT_EXTENSIONS_V2_NAMESPACE)
+                                && reader.LocalName == "TrackPointExtension")
                             {
-                                case "TrackPointExtension":
-                                     ReadGarminTrackPointExtensions(trackPoint);
-                                    break;
-                                default:
-                                     SkipElement();
-                                    break;
+                                ReadGarminTrackPointExtensions(trackPoint);
+                            }
+                            else
+                            {
+                                if (!trackPointReader.TryReadExtension(reader, trackPoint))
+                                    reader.SkipElement();
                             }
 
                             break;
                         }
-
-                         SkipElement();
-                        break;
-
                     case XmlNodeType.EndElement:
-                        if (reader.Name != elementName) throw new FormatException(reader.Name);
+                        if (reader.Name != elementName)
+                            throw new FormatException(reader.Name);
                         return;
                 }
             }
@@ -911,42 +913,42 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
                         switch (reader.LocalName)
                         {
-                            case "Proximity":
-                                wayPoint.Proximity =  ReadContentAsDouble();
+                            case GpxSymbol.Proximity:
+                                wayPoint.Proximity = reader.ReadElementContentAsDouble();
                                 break;
                             case "Temperature":
-                                wayPoint.Temperature =  ReadContentAsDouble();
+                                wayPoint.Temperature = reader.ReadElementContentAsDouble();
                                 break;
                             case "Depth":
-                                wayPoint.Depth =  ReadContentAsDouble();
+                                wayPoint.Depth = reader.ReadElementContentAsDouble();
                                 break;
                             case "DisplayMode":
-                                wayPoint.DisplayMode =  ReadContentAsString();
+                                wayPoint.DisplayMode = reader.ReadElementContentAsString();
                                 break;
                             case "Categories":
-                                 ReadGarminCategories(wayPoint);
+                                ReadGarminCategories(wayPoint);
                                 break;
                             case "Address":
-                                wayPoint.Address =  ReadGarminGpxAddress();
+                                wayPoint.Address = ReadGarminGpxAddress();
                                 break;
                             case "PhoneNumber":
-                                wayPoint.Phones.Add( ReadGarminGpxPhone());
+                                wayPoint.Phones.Add(ReadGarminGpxPhone());
                                 break;
                             case "Samples":
-                                wayPoint.Samples =  ReadContentAsInt();
+                                wayPoint.Samples = reader.ReadElementContentAsInt();
                                 break;
                             case "Expiration":
-                                wayPoint.Expiration =  ReadContentAsDateTime();
+                                wayPoint.Expiration = reader.ReadElementContentAsDateTime();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -968,7 +970,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -977,10 +979,10 @@ namespace Gpx.Implementation
                         {
                             case "DisplayColor":
                                 trackOrRoute.DisplayColor = (GpxColor)Enum.Parse(typeof(GpxColor),
-                                     ReadContentAsString(), false);
+                                     reader.ReadElementContentAsString(), false);
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -1003,7 +1005,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -1011,10 +1013,10 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "rpt":
-                                routePoint.RoutePoints.Add( ReadGarminAutoRoutePoint());
+                                routePoint.RoutePoints.Add(ReadGarminAutoRoutePoint());
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -1037,7 +1039,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -1046,32 +1048,32 @@ namespace Gpx.Implementation
                         {
                             case "Temperature":
                             case "atemp":
-                                trackPoint.Temperature =  ReadContentAsDouble();
+                                trackPoint.Temperature = reader.ReadElementContentAsDouble();
                                 break;
                             case "wtemp":
-                                trackPoint.WaterTemperature =  ReadContentAsDouble();
+                                trackPoint.WaterTemperature = reader.ReadElementContentAsDouble();
                                 break;
                             case "Depth":
                             case "depth":
-                                trackPoint.Depth =  ReadContentAsDouble();
+                                trackPoint.Depth = reader.ReadElementContentAsDouble();
                                 break;
                             case "hr":
-                                trackPoint.HeartRate =  ReadContentAsInt();
+                                trackPoint.HeartRate = reader.ReadElementContentAsInt();
                                 break;
                             case "cad":
-                                trackPoint.Cadence =  ReadContentAsInt();
+                                trackPoint.Cadence = reader.ReadElementContentAsInt();
                                 break;
                             case "speed":
-                                trackPoint.Speed =  ReadContentAsDouble();
+                                trackPoint.Speed = reader.ReadElementContentAsDouble();
                                 break;
                             case "course":
-                                trackPoint.Course =  ReadContentAsDouble();
+                                trackPoint.Course = reader.ReadElementContentAsDouble();
                                 break;
                             case "bearing":
-                                trackPoint.Bearing =  ReadContentAsDouble();
+                                trackPoint.Bearing = reader.ReadElementContentAsDouble();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -1094,7 +1096,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -1102,10 +1104,10 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "Category":
-                                wayPoint.Categories.Add( ReadContentAsString());
+                                wayPoint.Categories.Add(reader.ReadElementContentAsString());
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -1128,7 +1130,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -1136,10 +1138,10 @@ namespace Gpx.Implementation
                         switch (reader.LocalName)
                         {
                             case "alias":
-                                wayPoint.Aliases.Add( ReadContentAsString());
+                                wayPoint.Aliases.Add(reader.ReadElementContentAsString());
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -1165,12 +1167,12 @@ namespace Gpx.Implementation
             if (isEmptyElement)
                 return point;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                         SkipElement();
+                        reader.SkipElement();
                         break;
 
                     case XmlNodeType.EndElement:
@@ -1191,7 +1193,7 @@ namespace Gpx.Implementation
 
             string elementName = reader.Name;
 
-            while ( reader.Read())
+            while (reader.Read())
             {
                 switch (reader.NodeType)
                 {
@@ -1202,27 +1204,27 @@ namespace Gpx.Implementation
 
                                 if (string.IsNullOrEmpty(address.StreetAddress))
                                 {
-                                    address.StreetAddress =  ReadContentAsString();
+                                    address.StreetAddress = reader.ReadElementContentAsString();
                                     break;
                                 }
 
-                                address.StreetAddress += " " +  ReadContentAsString();
+                                address.StreetAddress += " " + reader.ReadElementContentAsString();
                                 break;
 
                             case "City":
-                                address.City =  ReadContentAsString();
+                                address.City = reader.ReadElementContentAsString();
                                 break;
                             case "State":
-                                address.State =  ReadContentAsString();
+                                address.State = reader.ReadElementContentAsString();
                                 break;
                             case "Country":
-                                address.Country =  ReadContentAsString();
+                                address.Country = reader.ReadElementContentAsString();
                                 break;
                             case "PostalCode":
-                                address.PostalCode =  ReadContentAsString();
+                                address.PostalCode = reader.ReadElementContentAsString();
                                 break;
                             default:
-                                 SkipElement();
+                                reader.SkipElement();
                                 break;
                         }
 
@@ -1243,29 +1245,10 @@ namespace Gpx.Implementation
             return new GpxPhone
             {
                 Category = reader.GetAttribute("Category", GpxNamespaces.GARMIN_EXTENSIONS_NAMESPACE),
-                Number =  ReadContentAsString()
+                Number = reader.ReadElementContentAsString()
             };
         }
 
-        private void SkipElement()
-        {
-            if (reader.IsEmptyElement)
-                return;
-
-            string elementName = reader.Name;
-            int depth = reader.Depth;
-
-            while ( reader.Read())
-            {
-                if (reader.NodeType == XmlNodeType.EndElement)
-                {
-                    if (reader.Depth == depth && reader.Name == elementName)
-                        return;
-                }
-            }
-
-            throw new FormatException(elementName);
-        }
 
         private void GetPointLocation(GpxPoint point)
         {
@@ -1273,10 +1256,10 @@ namespace Gpx.Implementation
             {
                 switch (reader.Name)
                 {
-                    case "lat":
+                    case GpxSymbol.Latitude:
                         point.Latitude = Angle.FromDegrees(double.Parse(reader.Value, CultureInfo.InvariantCulture.NumberFormat));
                         break;
-                    case "lon":
+                    case GpxSymbol.Longitude:
                         point.Longitude = Angle.FromDegrees(double.Parse(reader.Value, CultureInfo.InvariantCulture.NumberFormat));
                         break;
                 }
@@ -1287,108 +1270,64 @@ namespace Gpx.Implementation
         {
             switch (reader.Name)
             {
-                case "ele":
-                    point.Elevation =  ReadContentAsDouble();
+                case GpxSymbol.Elevation:
+                    point.Elevation = reader.ReadElementContentAsDouble();
                     return true;
-                case "time":
-                    point.Time =  ReadContentAsDateTime();
+                case GpxSymbol.Time:
+                    point.Time = reader.ReadElementContentAsDateTime();
                     return true;
                 case "magvar":
-                    point.MagneticVar =  ReadContentAsDouble();
+                    point.MagneticVar = reader.ReadElementContentAsDouble();
                     return true;
                 case "geoidheight":
-                    point.GeoidHeight =  ReadContentAsDouble();
+                    point.GeoidHeight = reader.ReadElementContentAsDouble();
                     return true;
-                case "name":
-                    point.Name =  ReadContentAsString();
+                case GpxSymbol.Name:
+                    point.Name = reader.ReadElementContentAsString();
                     return true;
-                case "cmt":
-                    point.Comment =  ReadContentAsString();
+                case GpxSymbol.Comment:
+                    point.Comment = reader.ReadElementContentAsString();
                     return true;
                 case "desc":
-                    point.Description =  ReadContentAsString();
+                    point.Description = reader.ReadElementContentAsString();
                     return true;
                 case "src":
-                    point.Source =  ReadContentAsString();
+                    point.Source = reader.ReadElementContentAsString();
                     return true;
                 case "link":
-                    point.Links.Add( ReadGpxLink());
+                    point.Links.Add(ReadGpxLink());
                     return true;
                 case "sym":
-                    point.Symbol =  ReadContentAsString();
+                    point.Symbol = reader.ReadElementContentAsString();
                     return true;
                 case "type":
-                    point.Type =  ReadContentAsString();
+                    point.Type = reader.ReadElementContentAsString();
                     return true;
                 case "fix":
-                    point.FixType =  ReadContentAsString();
+                    point.FixType = reader.ReadElementContentAsString();
                     return true;
                 case "sat":
-                    point.Satelites =  ReadContentAsInt();
+                    point.Satelites = reader.ReadElementContentAsInt();
                     return true;
                 case "hdop":
-                    point.Hdop =  ReadContentAsDouble();
+                    point.Hdop = reader.ReadElementContentAsDouble();
                     return true;
                 case "vdop":
-                    point.Vdop =  ReadContentAsDouble();
+                    point.Vdop = reader.ReadElementContentAsDouble();
                     return true;
                 case "pdop":
-                    point.Pdop =  ReadContentAsDouble();
+                    point.Pdop = reader.ReadElementContentAsDouble();
                     return true;
                 case "ageofdgpsdata":
-                    point.AgeOfData =  ReadContentAsDouble();
+                    point.AgeOfData = reader.ReadElementContentAsDouble();
                     return true;
                 case "dgpsid":
-                    point.DgpsId =  ReadContentAsInt();
+                    point.DgpsId = reader.ReadElementContentAsInt();
                     return true;
             }
 
             return false;
         }
 
-        private string ReadContentAsString()
-        {
-            if (reader.IsEmptyElement)
-                throw new FormatException(reader.Name);
-
-            string elementName = reader.Name;
-            string result = string.Empty;
-
-            while ( reader.Read())
-            {
-                switch (reader.NodeType)
-                {
-                    case XmlNodeType.Text:
-                        result = reader.Value;
-                        break;
-
-                    case XmlNodeType.EndElement:
-                        return result;
-
-                    case XmlNodeType.Element:
-                        throw new FormatException(elementName);
-                }
-            }
-
-            throw new FormatException(elementName);
-        }
-
-        private int ReadContentAsInt()
-        {
-            string value =  ReadContentAsString();
-            return int.Parse(value, CultureInfo.InvariantCulture);
-        }
-
-        private double ReadContentAsDouble()
-        {
-            string value =  ReadContentAsString();
-            return double.Parse(value, CultureInfo.InvariantCulture);
-        }
-
-        private DateTime ReadContentAsDateTime()
-        {
-            string value =  ReadContentAsString();
-            return DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
-        }
     }
 }

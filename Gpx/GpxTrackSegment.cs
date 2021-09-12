@@ -17,14 +17,15 @@ namespace Gpx
         {
 
         }
-        public override string ToString()
-        {
-            return String.Join(" ", TrackPoints.Select(it => "(" + it.ToString() + ")"));
-        }
 
         internal void Add(GpxTrackPoint point)
         {
             this.points.Add(point);
+        }
+
+        public override string ToString()
+        {
+            return String.Join(" ", TrackPoints.Select(it => "(" + it.ToString() + ")"));
         }
     }
 

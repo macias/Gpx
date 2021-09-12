@@ -1,6 +1,7 @@
 ﻿using MathUnit;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Gpx
@@ -70,7 +71,7 @@ namespace Gpx
 
         public override string ToString()
         {
-            return Latitude.ToString() + "," + Longitude.ToString();
+            return Latitude.ToString(CultureInfo.InvariantCulture) + "," + Longitude.ToString(CultureInfo.InvariantCulture);
         }
 
     }

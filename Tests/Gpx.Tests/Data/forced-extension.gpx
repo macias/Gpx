@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx>
+<trk>
+<trkseg>
+<trkpt lat="53.097929534" lon="27.403742513">
+  <ele>81.146617</ele>
+  <time>2002-01-25T15:11:00Z</time>
+<Proximity>6</Proximity>
+</trkpt>
+<trkpt lat="53.097886526" lon="27.403756316">
+  <ele>81.128757</ele>
+  <time>2002-01-25T15:11:01Z</time>
+<Proximity>12</Proximity>
+</trkpt>
+</trkseg>
+</trk>
+</gpx>

@@ -7,7 +7,7 @@ using System.Xml;
 
 namespace Gpx.Implementation
 {
-    internal sealed class GpxAsyncReader : IGpxAsyncReader,IDisposable
+    internal sealed class GpxAsyncReader : IGpxAsyncReader, IDisposable
     {
         private readonly XmlReader reader;
 
@@ -51,7 +51,7 @@ namespace Gpx.Implementation
                                 Metadata = await ReadGpxMetadataAsync().ConfigureAwait(false);
                                 ObjectType = GpxObjectType.Metadata;
                                 return true;
-                            case "wpt":
+                            case GpxSymbol.Waypoint:
                                 WayPoint = await ReadGpxWayPointAsync().ConfigureAwait(false);
                                 ObjectType = GpxObjectType.WayPoint;
                                 return true;
@@ -59,7 +59,7 @@ namespace Gpx.Implementation
                                 Route = await ReadGpxRouteAsync().ConfigureAwait(false);
                                 ObjectType = GpxObjectType.Route;
                                 return true;
-                            case "trk":
+                            case GpxSymbol.Track:
                                 Track = await ReadGpxTrackAsync().ConfigureAwait(false);
                                 ObjectType = GpxObjectType.Track;
                                 return true;
@@ -137,23 +137,23 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
+                            case GpxSymbol.Name:
                                 metadata.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "desc":
-                                metadata.Description =await ReadContentAsStringAsync().ConfigureAwait(false);
+                                metadata.Description = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "author":
-                                metadata.Author =await ReadGpxPersonAsync().ConfigureAwait(false);
+                                metadata.Author = await ReadGpxPersonAsync().ConfigureAwait(false);
                                 break;
                             case "copyright":
-                                metadata.Copyright =await ReadGpxCopyrightAsync().ConfigureAwait(false);
+                                metadata.Copyright = await ReadGpxCopyrightAsync().ConfigureAwait(false);
                                 break;
                             case "link":
                                 metadata.Link = await ReadGpxLinkAsync().ConfigureAwait(false);
                                 break;
-                            case "time":
-                                metadata.Time =await ReadContentAsDateTimeAsync().ConfigureAwait(false);
+                            case GpxSymbol.Time:
+                                metadata.Time = await ReadContentAsDateTimeAsync().ConfigureAwait(false);
                                 break;
                             case "keywords":
                                 metadata.Keywords = await ReadContentAsStringAsync().ConfigureAwait(false);
@@ -233,10 +233,10 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
+                            case GpxSymbol.Name:
                                 route.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
-                            case "cmt":
+                            case GpxSymbol.Comment:
                                 route.Comment = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "desc":
@@ -332,10 +332,10 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
+                            case GpxSymbol.Name:
                                 track.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
-                            case "cmt":
+                            case GpxSymbol.Comment:
                                 track.Comment = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "desc":
@@ -351,9 +351,9 @@ namespace Gpx.Implementation
                                 track.Number = await ReadContentAsIntAsync().ConfigureAwait(false);
                                 break;
                             case "type":
-                                track.Type =await ReadContentAsStringAsync().ConfigureAwait(false);
+                                track.Type = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
-                            case "trkseg":
+                            case GpxSymbol.TrackSegment:
                                 track.Segments.Add(await ReadGpxTrackSegmentAsync().ConfigureAwait(false));
                                 break;
                             case "extensions":
@@ -392,7 +392,7 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "trkpt":
+                            case GpxSymbol.TrackPoint:
                                 segment.Add(await ReadGpxTrackPointAsync().ConfigureAwait(false));
                                 break;
                             case "extensions":
@@ -469,7 +469,7 @@ namespace Gpx.Implementation
 
                         switch (reader.Name)
                         {
-                            case "name":
+                            case GpxSymbol.Name:
                                 person.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             case "email":
@@ -908,7 +908,7 @@ namespace Gpx.Implementation
                     case XmlNodeType.Element:
                         switch (reader.LocalName)
                         {
-                            case "Proximity":
+                            case GpxSymbol.Proximity:
                                 wayPoint.Proximity = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                                 break;
                             case "Temperature":
@@ -1263,10 +1263,10 @@ namespace Gpx.Implementation
             {
                 switch (reader.Name)
                 {
-                    case "lat":
+                    case GpxSymbol.Latitude:
                         point.Latitude = Angle.FromDegrees(double.Parse(reader.Value, CultureInfo.InvariantCulture.NumberFormat));
                         break;
-                    case "lon":
+                    case GpxSymbol.Longitude:
                         point.Longitude = Angle.FromDegrees(double.Parse(reader.Value, CultureInfo.InvariantCulture.NumberFormat));
                         break;
                 }
@@ -1277,10 +1277,10 @@ namespace Gpx.Implementation
         {
             switch (reader.Name)
             {
-                case "ele":
+                case GpxSymbol.Elevation:
                     point.Elevation = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
-                case "time":
+                case GpxSymbol.Time:
                     point.Time = await ReadContentAsDateTimeAsync().ConfigureAwait(false);
                     return true;
                 case "magvar":
@@ -1289,10 +1289,10 @@ namespace Gpx.Implementation
                 case "geoidheight":
                     point.GeoidHeight = await ReadContentAsDoubleAsync().ConfigureAwait(false);
                     return true;
-                case "name":
+                case GpxSymbol.Name:
                     point.Name = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
-                case "cmt":
+                case GpxSymbol.Comment:
                     point.Comment = await ReadContentAsStringAsync().ConfigureAwait(false);
                     return true;
                 case "desc":

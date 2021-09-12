@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace Gpx.Implementation
 {
-    internal sealed class GpxWriter : IGpxWriter,IDisposable
+    internal sealed class GpxWriter : IGpxWriter, IDisposable
     {
         private const string GPX_VERSION = "1.1";
         private const string GPX_CREATOR = "http://dlg.krakow.pl/gpx";
@@ -39,21 +39,29 @@ namespace Gpx.Implementation
         {
             Writer_.WriteStartElement("metadata");
 
-            if (metadata.Name != null) Writer_.WriteElementString("name", metadata.Name);
-            if (metadata.Description != null) Writer_.WriteElementString("desc", metadata.Description);
-            if (metadata.Author != null) WritePerson("author", metadata.Author);
-            if (metadata.Copyright != null) WriteCopyright("copyright", metadata.Copyright);
-            if (metadata.Link != null) WriteLink("link", metadata.Link);
-            if (metadata.Time != null) Writer_.WriteElementString("time", ToGpxDateString(metadata.Time.Value));
-            if (metadata.Keywords != null) Writer_.WriteElementString("keywords", metadata.Keywords);
-            if (metadata.Bounds != null) WriteBounds("bounds", metadata.Bounds);
+            if (metadata.Name != null)
+                Writer_.WriteElementString(GpxSymbol.Name, metadata.Name);
+            if (metadata.Description != null)
+                Writer_.WriteElementString("desc", metadata.Description);
+            if (metadata.Author != null)
+                WritePerson("author", metadata.Author);
+            if (metadata.Copyright != null)
+                WriteCopyright("copyright", metadata.Copyright);
+            if (metadata.Link != null)
+                WriteLink("link", metadata.Link);
+            if (metadata.Time != null)
+                Writer_.WriteElementString(GpxSymbol.Time, ToGpxDateString(metadata.Time.Value));
+            if (metadata.Keywords != null)
+                Writer_.WriteElementString("keywords", metadata.Keywords);
+            if (metadata.Bounds != null)
+                WriteBounds("bounds", metadata.Bounds);
 
             Writer_.WriteEndElement();
         }
 
         public void WriteWayPoint(GpxWayPoint wayPoint)
         {
-            Writer_.WriteStartElement("wpt");
+            Writer_.WriteStartElement(GpxSymbol.Waypoint);
             WritePoint(wayPoint);
 
             if (wayPoint.HasExtensions)
@@ -65,7 +73,7 @@ namespace Gpx.Implementation
                     Writer_.WriteStartElement("WaypointExtension", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE);
 
                     if (wayPoint.Proximity != null)
-                        Writer_.WriteElementString("Proximity", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Proximity.Value.ToString());
+                        Writer_.WriteElementString(GpxSymbol.Proximity, GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Proximity.Value.ToString());
                     if (wayPoint.Temperature != null)
                         Writer_.WriteElementString("Temperature", GpxNamespaces.GARMIN_WAYPOINT_EXTENSIONS_NAMESPACE, wayPoint.Temperature.Value.ToString());
                     if (wayPoint.Depth != null)
@@ -136,12 +144,12 @@ namespace Gpx.Implementation
 
         public void WriteTrack(GpxTrack track)
         {
-            Writer_.WriteStartElement("trk");
+            Writer_.WriteStartElement(GpxSymbol.Track);
             WriteTrackOrRoute(track);
 
             foreach (GpxTrackSegment segment in track.Segments)
             {
-                WriteTrackSegment("trkseg", segment);
+                WriteTrackSegment(GpxSymbol.TrackSegment, segment);
             }
 
             Writer_.WriteEndElement();
@@ -149,10 +157,14 @@ namespace Gpx.Implementation
 
         private void WriteTrackOrRoute(GpxTrackOrRoute trackOrRoute)
         {
-            if (trackOrRoute.Name != null) Writer_.WriteElementString("name", trackOrRoute.Name);
-            if (trackOrRoute.Comment != null) Writer_.WriteElementString("cmt", trackOrRoute.Comment);
-            if (trackOrRoute.Description != null) Writer_.WriteElementString("desc", trackOrRoute.Description);
-            if (trackOrRoute.Source != null) Writer_.WriteElementString("src", trackOrRoute.Source);
+            if (trackOrRoute.Name != null)
+                Writer_.WriteElementString(GpxSymbol.Name, trackOrRoute.Name);
+            if (trackOrRoute.Comment != null)
+                Writer_.WriteElementString(GpxSymbol.Comment, trackOrRoute.Comment);
+            if (trackOrRoute.Description != null)
+                Writer_.WriteElementString("desc", trackOrRoute.Description);
+            if (trackOrRoute.Source != null)
+                Writer_.WriteElementString("src", trackOrRoute.Source);
 
             foreach (GpxLink link in trackOrRoute.Links)
             {
@@ -188,7 +200,7 @@ namespace Gpx.Implementation
 
         private void WriteTrackPoint(GpxTrackPoint trackPoint)
         {
-            Writer_.WriteStartElement("trkpt");
+            Writer_.WriteStartElement(GpxSymbol.TrackPoint);
             WritePoint(trackPoint);
 
             if (trackPoint.HasExtensions)
@@ -236,20 +248,20 @@ namespace Gpx.Implementation
 
         private void WritePoint(GpxPoint point)
         {
-            Writer_.WriteAttributeString("lat", point.Latitude.ToString(CultureInfo.InvariantCulture));
-            Writer_.WriteAttributeString("lon", point.Longitude.ToString(CultureInfo.InvariantCulture));
+            Writer_.WriteAttributeString(GpxSymbol.Latitude, point.Latitude.ToString(CultureInfo.InvariantCulture));
+            Writer_.WriteAttributeString(GpxSymbol.Longitude, point.Longitude.ToString(CultureInfo.InvariantCulture));
             if (point.Elevation != null)
-                Writer_.WriteElementString("ele", point.Elevation.Value.ToString(CultureInfo.InvariantCulture));
+                Writer_.WriteElementString(GpxSymbol.Elevation, point.Elevation.Value.ToString(CultureInfo.InvariantCulture));
             if (point.Time != null)
-                Writer_.WriteElementString("time", ToGpxDateString(point.Time.Value));
+                Writer_.WriteElementString(GpxSymbol.Time, ToGpxDateString(point.Time.Value));
             if (point.MagneticVar != null)
                 Writer_.WriteElementString("magvar", point.MagneticVar.Value.ToString(CultureInfo.InvariantCulture));
             if (point.GeoidHeight != null)
                 Writer_.WriteElementString("geoidheight", point.GeoidHeight.Value.ToString(CultureInfo.InvariantCulture));
             if (point.Name != null)
-                Writer_.WriteElementString("name", point.Name);
+                Writer_.WriteElementString(GpxSymbol.Name, point.Name);
             if (point.Comment != null)
-                Writer_.WriteElementString("cmt", point.Comment);
+                Writer_.WriteElementString(GpxSymbol.Comment, point.Comment);
             if (point.Description != null)
                 Writer_.WriteElementString("desc", point.Description);
             if (point.Source != null)
@@ -260,23 +272,32 @@ namespace Gpx.Implementation
                 WriteLink("link", link);
             }
 
-            if (point.Symbol != null) Writer_.WriteElementString("sym", point.Symbol);
-            if (point.Type != null) Writer_.WriteElementString("type", point.Type);
-            if (point.FixType != null) Writer_.WriteElementString("fix", point.FixType);
-            if (point.Satelites != null) Writer_.WriteElementString("sat", point.Satelites.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.Hdop != null) Writer_.WriteElementString("hdop", point.Hdop.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.Vdop != null) Writer_.WriteElementString("vdop", point.Vdop.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.Pdop != null) Writer_.WriteElementString("pdop", point.Pdop.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.AgeOfData != null) Writer_.WriteElementString("ageofdgpsdata", point.AgeOfData.Value.ToString(CultureInfo.InvariantCulture));
-            if (point.DgpsId != null) Writer_.WriteElementString("dgpsid", point.DgpsId.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.Symbol != null)
+                Writer_.WriteElementString("sym", point.Symbol);
+            if (point.Type != null)
+                Writer_.WriteElementString("type", point.Type);
+            if (point.FixType != null)
+                Writer_.WriteElementString("fix", point.FixType);
+            if (point.Satelites != null)
+                Writer_.WriteElementString("sat", point.Satelites.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.Hdop != null)
+                Writer_.WriteElementString("hdop", point.Hdop.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.Vdop != null)
+                Writer_.WriteElementString("vdop", point.Vdop.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.Pdop != null)
+                Writer_.WriteElementString("pdop", point.Pdop.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.AgeOfData != null)
+                Writer_.WriteElementString("ageofdgpsdata", point.AgeOfData.Value.ToString(CultureInfo.InvariantCulture));
+            if (point.DgpsId != null)
+                Writer_.WriteElementString("dgpsid", point.DgpsId.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         private void WriteSubPoint(GpxPoint point)
         {
             Writer_.WriteStartElement("rpt", GpxNamespaces.GARMIN_EXTENSIONS_NAMESPACE);
 
-            Writer_.WriteAttributeString("lat", point.Latitude.ToString(CultureInfo.InvariantCulture));
-            Writer_.WriteAttributeString("lon", point.Longitude.ToString(CultureInfo.InvariantCulture));
+            Writer_.WriteAttributeString(GpxSymbol.Latitude, point.Latitude.ToString(CultureInfo.InvariantCulture));
+            Writer_.WriteAttributeString(GpxSymbol.Longitude, point.Longitude.ToString(CultureInfo.InvariantCulture));
 
             Writer_.WriteEndElement();
         }
@@ -285,8 +306,10 @@ namespace Gpx.Implementation
         {
             Writer_.WriteStartElement(elementName);
 
-            if (person.Name != null) Writer_.WriteElementString("name", person.Name);
-            if (person.Email != null) WriteEmail("email", person.Email);
+            if (person.Name != null)
+                Writer_.WriteElementString(GpxSymbol.Name, person.Name);
+            if (person.Email != null)
+                WriteEmail("email", person.Email);
 
             Writer_.WriteEndElement();
         }

@@ -1,6 +1,6 @@
 ﻿namespace Gpx
 {
-    public sealed class GpxTrackPoint : GpxPoint
+    public class GpxTrackPoint : GpxPoint
     {
         // GARMIN_EXTENSIONS, GARMIN_TRACKPOINT_EXTENSIONS_V1, GARMIN_TRACKPOINT_EXTENSIONS_V2
 
