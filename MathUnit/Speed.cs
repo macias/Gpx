@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace MathUnit
 {
@@ -108,7 +109,7 @@ namespace MathUnit
 
         public override string ToString()
         {
-            return $"{this.metersPerSecond}m/s";
+            return $"{this.metersPerSecond.ToString(CultureInfo.InvariantCulture)}m/s";
         }
         public string ToString(string format)
         {

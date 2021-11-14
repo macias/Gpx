@@ -1,6 +1,7 @@
 .vs
 **/bin/
 **/obj/
+**/PublishProfiles/
 clean.bat
 **/*.csproj.user
 

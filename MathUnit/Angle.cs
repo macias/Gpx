@@ -124,7 +124,7 @@ namespace MathUnit
 
         public override string ToString()
         {
-            return $"{Degrees}°";
+            return ToString(CultureInfo.InvariantCulture);
         }
 
         public string ToString(string format)

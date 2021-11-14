@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace MathUnit
 {
@@ -58,7 +59,11 @@ namespace MathUnit
         }
         public static Speed operator /(Length len, TimeSpan time)
         {
-            return Speed.FromMetersPerSecond( len.meters / time.TotalSeconds);
+            return Speed.FromMetersPerSecond(len.meters / time.TotalSeconds);
+        }
+        public static TimeSpan operator /(Length len, Speed speed)
+        {
+            return TimeSpan.FromSeconds(len.meters / speed.MetersPerSecond);
         }
         public static Length operator +(Length len1, Length len2)
         {
@@ -113,7 +118,7 @@ namespace MathUnit
 
         public override string ToString()
         {
-            return $"{this.meters}m";
+            return $"{this.meters.ToString(CultureInfo.InvariantCulture)}m";
         }
         public string ToString(string format)
         {
